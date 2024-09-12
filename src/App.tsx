@@ -43,7 +43,7 @@ useEffect(() => {
     <div className="grid grid-cols-4 w-screen h-screen bg-slate-100 gap-5 p-3">
       <Sidebar randomNum={randomNum} setRandomNumber={setRandomNumber}  />
       <Board randomNum={randomNum} genNums={genNums}/>
-      <Board randomNum={randomNum} genNums={genNums}/>
+      
     </div>
   )
 }
