@@ -22,6 +22,20 @@ export default function Board({randomNum,genNums}:{randomNum:number,genNums:numb
 
   const dialogRef = useRef<HTMLDialogElement | null>(null);
 
+  useEffect(() => {
+    if(localStorage.getItem("roomNo") && localStorage.getItem("role")){
+      setNumbers(JSON.parse(localStorage.getItem("numbers") as string))
+      setIndexSet1(JSON.parse(localStorage.getItem("indexSet1") as string))
+      setIndexSet2(JSON.parse(localStorage.getItem("indexSet2") as string))
+      setIndexSet3(JSON.parse(localStorage.getItem("indexSet3") as string))
+      setRow1Status(JSON.parse(localStorage.getItem("row1Status") as string))
+      setRow2Status(JSON.parse(localStorage.getItem("row2Status") as string))
+      setRow3Status(JSON.parse(localStorage.getItem("row3Status") as string))
+      setJaldi5(JSON.parse(localStorage.getItem("jaldi5") as string))
+      setHousee(JSON.parse(localStorage.getItem("housee") as string))
+    }
+  },[])
+
   const makeMark = (num : number) => {
     console.log(num)
     if(row1Status && row2Status && row3Status) setHousee(true);
