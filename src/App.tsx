@@ -127,7 +127,7 @@ function App() {
         audio.play();
     });
 
-    socket.on("housie", (number: number, srole: string, roomNo: string,genNums : number[],users : string[]) => {
+    socket.on("housie", (number: number, roomNo: string,genNums : number[],users : string[]) => {
       // console.log(role,srole);
       if (role === "guest" && roomNo === roomNo) {
         // localStorage.setItem("randomNum",number.toString())
