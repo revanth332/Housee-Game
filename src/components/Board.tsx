@@ -23,7 +23,7 @@ export default function Board({randomNum,genNums,totalTiles,setTotalTiles}:{rand
   const dialogRef = useRef<HTMLDialogElement | null>(null);
 
   useEffect(() => {
-    if(localStorage.getItem("roomNo") && localStorage.getItem("role")){
+    if(localStorage.getItem("indexSet1") && localStorage.getItem("indexSet2")){
       // setNumbers(JSON.parse(localStorage.getItem("numbers") as string))
       setIndexSet1(JSON.parse(localStorage.getItem("indexSet1") as string))
       setIndexSet2(JSON.parse(localStorage.getItem("indexSet2") as string))
@@ -155,7 +155,7 @@ export default function Board({randomNum,genNums,totalTiles,setTotalTiles}:{rand
     }
 
   return (
-    <div className="flex flex-col justify-evenly col-span-3 items-center bg-white rounded-2xl">
+    <div className="flex flex-col justify-evenly col-span-9 row-span-11 items-center bg-white rounded-2xl">
       <ToastContainer />
       <dialog ref={dialogRef} className="h-[200px] w-[500px] border-none backdrop:bg-black/35 rounded-xl">
       <div className="w-full h-full flex flex-col justify-evenly items-center">
@@ -168,19 +168,19 @@ export default function Board({randomNum,genNums,totalTiles,setTotalTiles}:{rand
       </div>
 
       </dialog>
-      <h1 style={{fontFamily:"cursive"}} className="text-5xl font-semibold text-slate-800">HOUSEE✌ <br /> <span className="text-sm block text-slate-600 mx-auto text-center mt-5">Lets play!</span> </h1>
+      {/* <h1 style={{fontFamily:"cursive"}} className="text-5xl font-semibold text-slate-800">HOUSEE✌ <br /> <span className="text-sm block text-slate-600 mx-auto text-center mt-5">Lets play!</span> </h1> */}
         <div className="flex flex-col">
             <div className="grid grid-cols-9 w-full relative overflow-hidden">
               <div className={`absolute bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row1Status ? "translate-x-0" : "-translate-x-full"}`}></div>
-            {totalTiles.slice(0,9).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet1.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
+            {totalTiles?.slice(0,9).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet1?.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
             </div>
             <div className="grid grid-cols-9 w-full relative overflow-hidden">
             <div className={`absolute bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row2Status ? "translate-x-0" : "-translate-x-full"}`}></div>
-            {totalTiles.slice(9,18).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet2.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
+            {totalTiles?.slice(9,18).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet2?.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
             </div>
             <div className="grid grid-cols-9 w-full relative overflow-hidden">
             <div className={`absolute bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row3Status ? "translate-x-0" : "-translate-x-full"}`}></div>
-            {totalTiles.slice(18,27).map((item,indx) => <Tile genNums={genNums} key={indx}  appear={indexSet3.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
+            {totalTiles?.slice(18,27).map((item,indx) => <Tile genNums={genNums} key={indx}  appear={indexSet3?.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
             </div>
         </div>
     </div>

@@ -1,3 +1,4 @@
+
 export default function Sidebar({
   randomNum,
   setRandomNumber,
@@ -8,7 +9,7 @@ export default function Sidebar({
   role: string;
 }) {
   return (
-    <div className="flex justify-center items-center bg-white rounded-2xl">
+    <div className="bg-white rounded-2xl flex justify-center items-center row-span-6 col-span-3">
       <div>
         <div className="text-center text-3xl mb-5">{randomNum}</div>
         {
