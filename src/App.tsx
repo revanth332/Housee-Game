@@ -10,15 +10,21 @@ export const randomNumberInRange = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
+type tile = {
+  number:number,
+  marked:boolean
+}
+
 function App() {
   const [randomNum, setRandomNum] = useState(0);
   const [genNums, setgenNums] = useState<number[]>([]);
   const [store, setStore] = useState<number[]>([]);
-  const [, setCount] = useState(-1);
+  const [count, setCount] = useState(-1);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [role, setRole] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [roomNo, setRoomNo] = useState<string>("");
+  const [totalTiles,setTotalTiles] = useState<tile []>([])
 
   const setRandomNumber = () => {
     setCount((prev) => {
@@ -29,32 +35,78 @@ function App() {
         "genNums",
         JSON.stringify([...genNums, store[next]])
       );
+      localStorage.setItem("count",next.toString());
 
       setRandomNum(store[next]);
-      setgenNums([...genNums, store[next]]);
-      socket.emit("housie", store[next], role, roomNo);
+      setgenNums([...genNums,store[next]]);
+      socket.emit("housie", store[next], role, roomNo,store,[...genNums,store[next]]);
       return next;
     });
   };
 
   useEffect(() => {
     socket.connect();
-    socket.on("housie", (number: number, srole: string, roomNo: string) => {
+    console.log("called");
+    socket.on("housie", (number: number, srole: string, roomNo: string,store : number[],genNums : number[]) => {
       // console.log(role,srole);
       if (role === "guest" && roomNo === roomNo) {
-        setRandomNum(number);
-        setgenNums([...genNums,number]);
+        // localStorage.setItem("randomNum",number.toString())
+        setCount((prev) => {
+          const next = prev + 1;
+          console.log([...genNums, number],randomNum,count)
+          localStorage.setItem("randomNum", number.toString());
+          localStorage.setItem(
+            "genNums",
+            JSON.stringify([...genNums,number ])
+          );
+          localStorage.setItem("count",next.toString());
+
+          setRandomNum(number);
+          setgenNums([...genNums, number]);
+          return next;
+        });
         toast(`Number drawn: ${number}`);
       }
     });
-
-    dialogRef.current?.showModal();
 
     return () => {
       socket.off("housie");
       socket.disconnect();
     };
   }, [role]);
+  
+
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+    const roomNo = localStorage.getItem("roomNo");
+    const genNums = localStorage.getItem("genNums");
+    const randomNum = localStorage.getItem("randomNum");
+    const totalTiles = localStorage.getItem("totalTiles");
+    const store = localStorage.getItem("store");
+    const count = localStorage.getItem("count");
+
+    if(role && roomNo && totalTiles && store && count){
+      setRole(role);
+      setRoomNo(roomNo);
+      setTotalTiles(JSON.parse(totalTiles));
+      setStore(JSON.parse(store))
+      setCount(JSON.parse(count));
+      console.log(role,dialogRef.current)
+      dialogRef?.current?.close();
+      if(randomNum && genNums){
+        setRandomNum(Number(randomNum));
+        setgenNums(JSON.parse(genNums));
+      }
+    }
+    else{
+      dialogRef.current?.showModal();
+    }
+
+  },[])
+
+  // useEffect(() => {
+  //   console.log(genNums)
+  // },[genNums])
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -76,7 +128,19 @@ function App() {
             type === "createRoom" ? "host" : "guest"
           );
 
+          localStorage.setItem("count","-1");
           setRoomNo(response.data.room);
+          setTotalTiles(() => {
+            const newTiles = generateUniqueRandomNumbers();
+            localStorage.setItem("totalTiles",JSON.stringify(newTiles));
+            return newTiles;
+          });
+          setStore(() => {
+            const newStore = generateRanNums();
+            localStorage.setItem("store",JSON.stringify(newStore));
+            return newStore;
+          });
+          localStorage.setItem("genNums",JSON.stringify([]))
           toast.success("Welcome to Housie!!!");
           dialogRef.current?.close();
         } else {
@@ -100,14 +164,18 @@ function App() {
     return newNumbers;
   };
 
-  useEffect(() => {
-    if (localStorage.getItem("roomNo") && localStorage.getItem("role")) {
-      setRole(localStorage.getItem("role") as string);
-      setRoomNo(localStorage.getItem("roomNo") as string);
-      setgenNums(JSON.parse(localStorage.getItem("genNums") as string));
+  const generateUniqueRandomNumbers = () => {
+    var newNumbers:number[] = [];
+    while (newNumbers.length < 27) {
+      let index = newNumbers.length;
+      const randomNumber = randomNumberInRange(((index % 9) * 10) + 1, ((index % 9) * 10) + 9);
+      if (!newNumbers.includes(randomNumber)) {
+        newNumbers.push(randomNumber);
+      }
     }
-    setStore(generateRanNums());
-  }, []);
+    const tiles = newNumbers.map(num => { return {number:num,marked:false}})
+    return tiles;
+  }
 
   return (
     <div className="grid grid-cols-4 w-screen h-screen bg-slate-100 gap-5 p-3">
@@ -164,7 +232,7 @@ function App() {
         randomNum={randomNum}
         setRandomNumber={setRandomNumber}
       />
-      <Board randomNum={randomNum} genNums={genNums} />
+      <Board setTotalTiles={setTotalTiles} totalTiles={totalTiles} randomNum={randomNum} genNums={genNums} />
     </div>
   );
 }

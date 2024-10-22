@@ -9,8 +9,8 @@ type tile = {
   marked:boolean
 }
 
-export default function Board({randomNum,genNums}:{randomNum:number,genNums:number[]}) {
-  const [numbers,setNumbers] = useState<tile[]>([])
+export default function Board({randomNum,genNums,totalTiles,setTotalTiles}:{randomNum:number,genNums:number[],totalTiles : tile[],setTotalTiles : React.Dispatch<React.SetStateAction<tile[]>>}) {
+  // const [numbers,setNumbers] = useState<tile[]>([])
   const [indexSet1,setIndexSet1] = useState<number[]>([])
   const [indexSet2,setIndexSet2] = useState<number[]>([])
   const [indexSet3,setIndexSet3] = useState<number[]>([])
@@ -24,7 +24,7 @@ export default function Board({randomNum,genNums}:{randomNum:number,genNums:numb
 
   useEffect(() => {
     if(localStorage.getItem("roomNo") && localStorage.getItem("role")){
-      setNumbers(JSON.parse(localStorage.getItem("numbers") as string))
+      // setNumbers(JSON.parse(localStorage.getItem("numbers") as string))
       setIndexSet1(JSON.parse(localStorage.getItem("indexSet1") as string))
       setIndexSet2(JSON.parse(localStorage.getItem("indexSet2") as string))
       setIndexSet3(JSON.parse(localStorage.getItem("indexSet3") as string))
@@ -34,42 +34,85 @@ export default function Board({randomNum,genNums}:{randomNum:number,genNums:numb
       setJaldi5(JSON.parse(localStorage.getItem("jaldi5") as string))
       setHousee(JSON.parse(localStorage.getItem("housee") as string))
     }
+    else{
+      localStorage.setItem("row1Status","false");      
+      localStorage.setItem("row2Status","false");      
+      localStorage.setItem("row3Status","false");     
+      localStorage.setItem("jaldi5","false");    
+      localStorage.setItem("housee","false");    
+
+      setIndexSet1(() => {
+        const indexes = generateIndexes();
+        localStorage.setItem("indexSet1",JSON.stringify(indexes));
+        return indexes;
+    });
+      setIndexSet2(() => {
+        const indexes = generateIndexes();
+        localStorage.setItem("indexSet2",JSON.stringify(indexes));
+        return indexes;
+    });
+      setIndexSet3(() => {
+        const indexes = generateIndexes();
+        localStorage.setItem("indexSet3",JSON.stringify(indexes));
+        return indexes;
+    });
+    }
   },[])
 
   const makeMark = (num : number) => {
     console.log(num)
     if(row1Status && row2Status && row3Status) setHousee(true);
-    if(num === randomNum || genNums.includes(num) || true){
-      setNumbers((prev:tile[]) => {
+    if(num === randomNum || genNums?.includes(num)){
+      setTotalTiles((prev:tile[]) => {
         const newTiles = prev.map(item => item.number === num ? {...item,marked:true} : item);
         const markedCount = newTiles.reduce((count, tile) => (tile.marked ? count + 1 : count), 0);
         const Row1Count = newTiles.slice(0,9).reduce((count, tile) => (tile.marked ? count + 1 : count), 0);
         const Row2Count = newTiles.slice(9,18).reduce((count, tile) => (tile.marked ? count + 1 : count), 0);
         const Row3Count = newTiles.slice(18,27).reduce((count, tile) => (tile.marked ? count + 1 : count), 0);
 
-        setJaldi5(markedCount === 5);  
-        setRow1Status(Row1Count === 5);
-        setRow2Status(Row2Count === 5);
-        setRow3Status(Row3Count === 5);
-        setHousee(Row1Count === 5 && Row2Count === 5 && Row3Count === 5)
-
+        setJaldi5(() => {
+          const bool = markedCount === 5;
+          localStorage.setItem("jaldi5",bool+"");
+          return bool;
+        });  
+        setRow1Status(() => {
+          const bool = Row1Count === 5;
+          localStorage.setItem("jaldi5",bool+"");
+          return bool;
+        });
+        setRow2Status(() => {
+          const bool = Row2Count === 5;
+          localStorage.setItem("jaldi5",bool+"");
+          return bool;
+        });
+        setRow3Status(() => {
+          const bool = Row3Count === 5;
+          localStorage.setItem("jaldi5",bool+"");
+          return bool;
+        });
+        setHousee(() => {
+          const bool = Row1Count === 5 && Row2Count === 5 && Row3Count === 5;
+          localStorage.setItem("jaldi5",bool+"");
+          return bool;
+        })
+        localStorage.setItem("totalTiles",JSON.stringify(newTiles));
         return newTiles;
     });
 }
   }
 
-  const generateUniqueRandomNumbers = () => {
-    var newNumbers:number[] = [];
-    while (newNumbers.length < 27) {
-      let index = newNumbers.length;
-      const randomNumber = randomNumberInRange(((index % 9) * 10) + 1, ((index % 9) * 10) + 9);
-      if (!newNumbers.includes(randomNumber)) {
-        newNumbers.push(randomNumber);
-      }
-    }
-    const tiles = newNumbers.map(num => { return {number:num,marked:false}})
-    return tiles;
-  }
+  // const generateUniqueRandomNumbers = () => {
+  //   var newNumbers:number[] = [];
+  //   while (newNumbers.length < 27) {
+  //     let index = newNumbers.length;
+  //     const randomNumber = randomNumberInRange(((index % 9) * 10) + 1, ((index % 9) * 10) + 9);
+  //     if (!newNumbers.includes(randomNumber)) {
+  //       newNumbers.push(randomNumber);
+  //     }
+  //   }
+  //   const tiles = newNumbers.map(num => { return {number:num,marked:false}})
+  //   return tiles;
+  // }
 
   const generateIndexes = () => {
     const newNumbers : number[] = []
@@ -81,12 +124,6 @@ export default function Board({randomNum,genNums}:{randomNum:number,genNums:numb
           }
           return newNumbers;
   }
-      useEffect(() => {
-          setIndexSet1(generateIndexes());
-          setIndexSet2(generateIndexes());
-          setIndexSet3(generateIndexes());
-          setNumbers(generateUniqueRandomNumbers());
-      },[])
 
       useEffect(() => {
         if(jaldi5) toast("Jaldi 5 !!!")
@@ -135,15 +172,15 @@ export default function Board({randomNum,genNums}:{randomNum:number,genNums:numb
         <div className="flex flex-col">
             <div className="grid grid-cols-9 w-full relative overflow-hidden">
               <div className={`absolute bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row1Status ? "translate-x-0" : "-translate-x-full"}`}></div>
-            {numbers.slice(0,9).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet1.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
+            {totalTiles.slice(0,9).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet1.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
             </div>
             <div className="grid grid-cols-9 w-full relative overflow-hidden">
             <div className={`absolute bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row2Status ? "translate-x-0" : "-translate-x-full"}`}></div>
-            {numbers.slice(9,18).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet2.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
+            {totalTiles.slice(9,18).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet2.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
             </div>
             <div className="grid grid-cols-9 w-full relative overflow-hidden">
             <div className={`absolute bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row3Status ? "translate-x-0" : "-translate-x-full"}`}></div>
-            {numbers.slice(18,27).map((item,indx) => <Tile genNums={genNums} key={indx}  appear={indexSet3.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
+            {totalTiles.slice(18,27).map((item,indx) => <Tile genNums={genNums} key={indx}  appear={indexSet3.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
             </div>
         </div>
     </div>
