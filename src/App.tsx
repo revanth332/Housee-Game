@@ -8,6 +8,8 @@ import axios from "axios";
 import Participants from "./components/Participants";
 import Header from "./components/Header";
 
+const URL = import.meta.env.SOCKET_URL;
+
 export const randomNumberInRange = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
@@ -200,7 +202,7 @@ function App() {
 
     setRole(() => (type === "createRoom" ? "host" : "guest"));
     axios
-      .post("http://172.17.10.127:3000/api/room", {
+      .post(`${URL}/api/room`, {
         type,
         roomCode,
         username
