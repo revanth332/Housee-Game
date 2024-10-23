@@ -39,7 +39,7 @@ function App() {
   const [allowTalk,setAllowTalk] = useState(false)
   const formRef = useRef<HTMLFormElement>(null);
 
-  const logout = () => {
+  const clearFields = () => {
     localStorage.clear();
     dialogRef.current?.showModal();
     setLogged(false);
@@ -55,7 +55,10 @@ function App() {
     if(formRef.current){
       formRef.current.reset();
     }
-    
+  }
+
+  const logout = () => {
+    clearFields();
     socket.emit("exit",username,roomNo,role);
   }
 
@@ -98,7 +101,7 @@ function App() {
     socket.on("exit",(exitedUser,exitedRoom,exitedRole) => {
       if(exitedRoom === roomNo){
         if(exitedRole === "host"){
-          logout();
+          clearFields();
         }
         else if(exitedRole === "guest"){
           setUsers([...users.filter(user => user !== exitedUser)])

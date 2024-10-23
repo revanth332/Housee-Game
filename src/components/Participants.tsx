@@ -15,13 +15,13 @@ export default function Participants({
     const filteredUsers = users.filter(user => user.includes(searchTerm))
 
   return (
-    <div className="bg-[#4a5b82] rounded-2xl p-5 row-span-6 col-span-3 overflow-y-auto">
-      <h2 className="text-xl font-bold text-white mb-2">Participants</h2>
-      <input onChange={(e) => setSearchTerm(e.target.value)} className="border-2 mb-3 w-full rounded-xl p-2 border-slate-400" type="text" name="user" id="user" placeholder="Type.."  />
+    <div className="bg-white rounded-2xl p-5 row-span-6 col-span-3 overflow-y-auto">
+      <h2 className="text-xl font-bold text-gray-500 mb-2">Participants</h2>
+      <input onChange={(e) => setSearchTerm(e.target.value)} className="border-2 mb-2 w-full rounded-xl p-2 border-slate-400" type="text" name="user" id="user" placeholder="Type.."  />
       {filteredUsers.map((user, index) => (
         <div
           key={index}
-          className="bg-gradient-to-br from-[#435275] to-[#4f618b] shadow-[5px_-5px_10px_#3f4d6f,-5px_5px_10px_#556996] rounded-xl p-2 mb-3 text-white flex justify-between items-center"
+          className="bg-slate-700 rounded-xl p-2 mb-2 text-white flex justify-between items-center    "
         >
           <p>{user}</p>
           <div className="flex items-center">
