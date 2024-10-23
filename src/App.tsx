@@ -163,7 +163,7 @@ function App() {
 
     });
 
-    socket.on("housie", (number: number, roomNo: string,genNums : number[],users : string[],closed : boolean) => {
+    socket.on("housie", (number: number, roomNo: string,genNums : number[],users : string[]) => {
       // console.log(role,srole);
       if (role === "guest" && roomNo === roomNo) {
         // localStorage.setItem("randomNum",number.toString())

@@ -25,7 +25,7 @@ export default function Participants({
         >
           <p>{user}</p>
           <div className="flex items-center">
-            {user === localStorage.getItem("username") ? (
+            {user === username ? (
               allowTalk ? (
                 <>
                   {/* <p className="border mr-2 rounded-full bg-green-400 w-3 h-3 animate-ping"></p>
