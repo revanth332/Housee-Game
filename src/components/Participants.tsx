@@ -1,14 +1,47 @@
+import { Mic, MicOff } from "lucide-react";
+import { useState } from "react";
+export default function Participants({
+  users,
+  username,
+  allowTalk,
+  handleAllowTalk,
+}: {
+  users: string[];
+  username: string;
+  allowTalk: Boolean;
+  handleAllowTalk: () => void;
+}) {
+    const [searchTerm,setSearchTerm] = useState<string>("");
+    const filteredUsers = users.filter(user => user.includes(searchTerm))
 
-export default function Participants({users}:{users : string []}) {
   return (
-    <div className="bg-white rounded-2xl p-5 row-span-6 col-span-3 overflow-y-auto">
-        <h2 className="text-xl font-bold text-gray-500 mb-2">Participants</h2>
-        {users.map((user,index) => (
-            <div key={index} className="bg-blue-400 rounded-xl p-2 mb-2 text-white flex justify-between items-center    ">
-                <p>{user}</p>
-                <p className="border mr-2 rounded-full bg-green-400 w-3 h-3"></p>
-            </div>
-        ))}
+    <div className="bg-[#4a5b82] rounded-2xl p-5 row-span-6 col-span-3 overflow-y-auto">
+      <h2 className="text-xl font-bold text-white mb-2">Participants</h2>
+      <input onChange={(e) => setSearchTerm(e.target.value)} className="border-2 mb-3 w-full rounded-xl p-2 border-slate-400" type="text" name="user" id="user" placeholder="Type.."  />
+      {filteredUsers.map((user, index) => (
+        <div
+          key={index}
+          className="bg-gradient-to-br from-[#435275] to-[#4f618b] shadow-[5px_-5px_10px_#3f4d6f,-5px_5px_10px_#556996] rounded-xl p-2 mb-3 text-white flex justify-between items-center"
+        >
+          <p>{user}</p>
+          <div className="flex items-center">
+            {user === localStorage.getItem("username") ? (
+              allowTalk ? (
+                <>
+                  {/* <p className="border mr-2 rounded-full bg-green-400 w-3 h-3 animate-ping"></p>
+                   */}
+                  <Mic onClick={handleAllowTalk} className="text-green-400 w-5" />
+                </>
+              ) : (
+                <MicOff onClick={handleAllowTalk} className="text-red-300 w-5" />
+              )
+            ) : (
+              <p className="border mr-2 rounded-full bg-green-400 w-2 h-2 animate-ping"></p>
+            //   <p>{username}</p>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
-  )
+  );
 }

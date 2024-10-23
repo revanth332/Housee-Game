@@ -7,6 +7,9 @@ import { useRef } from "react";
 import axios from "axios";
 import Participants from "./components/Participants";
 import Header from "./components/Header";
+import { Loader2 } from 'lucide-react';
+
+
 
 const URL = import.meta.env.VITE_SOCKET_URL;
 
@@ -32,6 +35,9 @@ function App() {
   const [users,setUsers] = useState<string []>([])
   const [logged,setLogged] = useState(false);
   const [username,setUsername] = useState("");
+  const [isLoading,setIsLoading] = useState(false)
+  const [allowTalk,setAllowTalk] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null);
 
   const logout = () => {
     localStorage.clear();
@@ -46,6 +52,15 @@ function App() {
     setTotalTiles([])
     setUsers([])
     setUsername("")
+    if(formRef.current){
+      formRef.current.reset();
+    }
+    
+    socket.emit("exit",username,roomNo,role);
+  }
+
+  const handleAllowTalk = () => {
+    setAllowTalk(prev => !prev)
   }
 
   const setRandomNumber = () => {
@@ -72,12 +87,23 @@ function App() {
 
     socket.emit("entered",role,roomNo,username);
 
-    socket.on("entered",(role,room,username) => {
+    socket.on("entered",(role,room,user) => {
       if(role === "guest" && room === roomNo){
         console.log(users,username)
-        setUsers([username,...users]);
+        setUsers([username,user,...users.filter(user => user != username && user != "")]);
       }
       
+    })
+
+    socket.on("exit",(exitedUser,exitedRoom,exitedRole) => {
+      if(exitedRoom === roomNo){
+        if(exitedRole === "host"){
+          logout();
+        }
+        else if(exitedRole === "guest"){
+          setUsers([...users.filter(user => user !== exitedUser)])
+        }
+      }
     })
 
     socket.on('connect', () => {
@@ -89,6 +115,7 @@ function App() {
     
             madiaRecorder.addEventListener("dataavailable", function (event) {
                 audioChunks.push(event.data);
+                // console.log("available")
             });
     
             madiaRecorder.addEventListener("stop", function () {
@@ -98,7 +125,7 @@ function App() {
                 fileReader.readAsDataURL(audioBlob);
                 fileReader.onloadend = function () {
                     var base64String = fileReader.result;
-                    socket.emit("audioStream", base64String);
+                    if(allowTalk) socket.emit("audioStream", base64String,roomNo);
                 };
     
                 madiaRecorder.start();
@@ -117,7 +144,9 @@ function App() {
         });
     });
     
-    socket.on('audioStream', (audioData) => {
+    socket.on('audioStream', (audioData,room) => {
+      if(room === roomNo && role === "guest"){
+        console.log("talking")
         var newData = audioData.split(";");
         newData[0] = "data:audio/ogg;";
         newData = newData[0] + newData[1];
@@ -127,9 +156,11 @@ function App() {
             return;
         }
         audio.play();
+      }
+
     });
 
-    socket.on("housie", (number: number, roomNo: string,genNums : number[],users : string[]) => {
+    socket.on("housie", (number: number, roomNo: string,genNums : number[],users : string[],closed : boolean) => {
       // console.log(role,srole);
       if (role === "guest" && roomNo === roomNo) {
         // localStorage.setItem("randomNum",number.toString())
@@ -143,13 +174,16 @@ function App() {
           );
           localStorage.setItem("count",next.toString());
           localStorage.setItem("users",JSON.stringify(users))
-          setUsers(users)
+          // setUsers(users)
           setRandomNum(number);
           setgenNums([...genNums, number]);
           return next;
         });
         toast(`Number drawn: ${number}`);
       }
+      // else if(closed){
+      //   logout();
+      // }
     });
 
     return () => {
@@ -198,21 +232,22 @@ function App() {
     const formData = new FormData(e.target as HTMLFormElement);
     const type = formData.get("type");
     const roomCode = formData.get("enterRoom");
-    const username = formData.get("username");
+    const user = formData.get("username");
 
     setRole(() => (type === "createRoom" ? "host" : "guest"));
+    setIsLoading(true);
     axios
       .post(`${URL}/api/room`, {
         type,
         roomCode,
-        username
+        user
       })
       .then((response) => {
         console.log("Success:", response.data);
         if (response.data.success) {
           setLogged(true);
-          if (username){
-            localStorage.setItem("username",username.toString());
+          if (user){
+            localStorage.setItem("username",user.toString());
           }
           localStorage.setItem("users", JSON.stringify(response.data.users));
           localStorage.setItem("roomNo", response.data.room);
@@ -222,10 +257,10 @@ function App() {
           );
 
           localStorage.setItem("count","-1");
-          if(username) setUsername(username.toString());
+          if(user) setUsername(user.toString());
 
-          setUsers(response.data.users);
-          setRoomNo(response.data.room);
+          setUsers([user,...response.data.users.filter((u:string) => u !== user)]);
+          setRoomNo(response.data.room);  
           setTotalTiles(() => {
             const newTiles = generateUniqueRandomNumbers();
             localStorage.setItem("totalTiles",JSON.stringify(newTiles));
@@ -246,7 +281,10 @@ function App() {
       .catch((error) => {
         console.error("Error:", error);
         toast.error("Failed to send room details.");
-      });
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   };
 
   const generateRanNums = () => {
@@ -276,7 +314,7 @@ function App() {
   return (
     <div className="grid grid-cols-12 grid-rows-12 w-screen h-screen bg-slate-100 gap-3 p-3">
       <dialog ref={dialogRef} className="bg-slate-100 p-5 rounded-xl w-[500px]">
-        <form onSubmit={handleSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit}>
           <div className="mb-3">
             <label
               htmlFor="type"
@@ -331,8 +369,12 @@ function App() {
               type="submit"
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              Submit
+              {
+                isLoading ? <Loader2 className="text-white animate-spin"/> : "Submit"
+              
+              }
             </button>
+            
           </div>
           {error && (
             <div className="text-red-500 text-center mt-3">{error}</div>
@@ -350,6 +392,9 @@ function App() {
       <Board setTotalTiles={setTotalTiles} totalTiles={totalTiles} randomNum={randomNum} genNums={genNums} />
       <Participants
         users={users}
+        allowTalk={allowTalk}
+        handleAllowTalk={handleAllowTalk}
+        username={username}
       />
         </>
       }
