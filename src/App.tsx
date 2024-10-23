@@ -8,7 +8,7 @@ import axios from "axios";
 import Participants from "./components/Participants";
 import Header from "./components/Header";
 
-const URL = import.meta.env.SOCKET_URL;
+const URL = import.meta.env.VITE_SOCKET_URL;
 
 export const randomNumberInRange = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -186,7 +186,7 @@ function App() {
     else{
       dialogRef.current?.showModal();
     }
-
+    console.log(URL)
   },[])
 
   // useEffect(() => {
