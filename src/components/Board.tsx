@@ -9,7 +9,7 @@ type tile = {
   marked:boolean
 }
 
-export default function Board({randomNum,genNums,totalTiles,setTotalTiles}:{randomNum:number,genNums:number[],totalTiles : tile[],setTotalTiles : React.Dispatch<React.SetStateAction<tile[]>>}) {
+export default function Board({exitMessage,emitGameCompleteSignal,logout,randomNum,genNums,totalTiles,setTotalTiles}:{exitMessage:string,emitGameCompleteSignal : () => void,logout : () => void,randomNum:number,genNums:number[],totalTiles : tile[],setTotalTiles : React.Dispatch<React.SetStateAction<tile[]>>}) {
   // const [numbers,setNumbers] = useState<tile[]>([])
   const [indexSet1,setIndexSet1] = useState<number[]>([])
   const [indexSet2,setIndexSet2] = useState<number[]>([])
@@ -77,22 +77,22 @@ export default function Board({randomNum,genNums,totalTiles,setTotalTiles}:{rand
         });  
         setRow1Status(() => {
           const bool = Row1Count === 5;
-          localStorage.setItem("jaldi5",bool+"");
+          localStorage.setItem("row1Status",bool+"");
           return bool;
         });
         setRow2Status(() => {
           const bool = Row2Count === 5;
-          localStorage.setItem("jaldi5",bool+"");
+          localStorage.setItem("row2Status",bool+"");
           return bool;
         });
         setRow3Status(() => {
           const bool = Row3Count === 5;
-          localStorage.setItem("jaldi5",bool+"");
+          localStorage.setItem("row3Status",bool+"");
           return bool;
         });
         setHousee(() => {
           const bool = Row1Count === 5 && Row2Count === 5 && Row3Count === 5;
-          localStorage.setItem("jaldi5",bool+"");
+          localStorage.setItem("housee",bool+"");
           return bool;
         })
         localStorage.setItem("totalTiles",JSON.stringify(newTiles));
@@ -137,8 +137,11 @@ export default function Board({randomNum,genNums,totalTiles,setTotalTiles}:{rand
 
       useEffect(() => {
         // console.log("row1",row1Status)
-        if(housee) dialogRef.current?.showModal();
-    },[housee])
+        if(housee || exitMessage.includes("has")){
+          dialogRef.current?.showModal();
+          emitGameCompleteSignal();
+        }
+    },[housee,exitMessage])
 
       useEffect(() => {
         // console.log("row2",row2Status)
@@ -152,15 +155,16 @@ export default function Board({randomNum,genNums,totalTiles,setTotalTiles}:{rand
 
     const closeDialog = () => {
       dialogRef.current?.close();
+      logout();
     }
 
   return (
-    <div className="flex flex-col justify-evenly col-span-9 row-span-11 items-center bg-white rounded-2xl">
+    <div className="flex flex-col justify-evenly col-span-9 row-span-11 items-center shadow-[3px_-3px_6px_#a1a1a1,-3px_3px_6px_#ffffff] bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] rounded-2xl">
       <ToastContainer />
       <dialog ref={dialogRef} className="h-[200px] w-[500px] border-none backdrop:bg-black/35 rounded-xl">
       <div className="w-full h-full flex flex-col justify-evenly items-center">
       <div className="flex flex-col justify-evenly items-center font-bold text-2xl text-green-600">
-          <div>🎊🎉✨Yayy! Housee!!!!</div>
+          <div>{exitMessage}</div>
         </div>
         <div className="text-center">
           <button onClick={closeDialog} className="bg-blue-950 text-white rounded-xl w-[120px] p-2">OK</button>
@@ -171,15 +175,15 @@ export default function Board({randomNum,genNums,totalTiles,setTotalTiles}:{rand
       {/* <h1 style={{fontFamily:"cursive"}} className="text-5xl font-semibold text-slate-800">HOUSEE✌ <br /> <span className="text-sm block text-slate-600 mx-auto text-center mt-5">Lets play!</span> </h1> */}
         <div className="flex flex-col">
             <div className="grid grid-cols-9 w-full relative overflow-hidden">
-              <div className={`absolute bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row1Status ? "translate-x-0" : "-translate-x-full"}`}></div>
+              <div className={`absolute z-50 bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row1Status ? "translate-x-0" : "-translate-x-full"}`}></div>
             {totalTiles?.slice(0,9).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet1?.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
             </div>
             <div className="grid grid-cols-9 w-full relative overflow-hidden">
-            <div className={`absolute bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row2Status ? "translate-x-0" : "-translate-x-full"}`}></div>
+            <div className={`absolute z-50 bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row2Status ? "translate-x-0" : "-translate-x-full"}`}></div>
             {totalTiles?.slice(9,18).map((item,indx) => <Tile genNums={genNums} key={indx} appear={indexSet2?.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
             </div>
             <div className="grid grid-cols-9 w-full relative overflow-hidden">
-            <div className={`absolute bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row3Status ? "translate-x-0" : "-translate-x-full"}`}></div>
+            <div className={`absolute z-50 bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${row3Status ? "translate-x-0" : "-translate-x-full"}`}></div>
             {totalTiles?.slice(18,27).map((item,indx) => <Tile genNums={genNums} key={indx}  appear={indexSet3?.includes(indx)} number={item.number} marked={item.marked} makeMark={makeMark} />)}
             </div>
         </div>
