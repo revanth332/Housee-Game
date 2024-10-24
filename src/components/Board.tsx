@@ -159,7 +159,7 @@ export default function Board({exitMessage,emitGameCompleteSignal,logout,randomN
     }
 
   return (
-    <div className="flex flex-col justify-evenly col-span-9 row-span-11 items-center shadow-[3px_-3px_6px_#a1a1a1,-3px_3px_6px_#ffffff] bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] rounded-2xl">
+    <div className="flex flex-col justify-evenly col-span-full row-start-7 row-end-13 md:col-span-9 md:row-span-11 items-center shadow-[3px_-3px_6px_#a1a1a1,-3px_3px_6px_#ffffff] bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] md:rounded-2xl rounded-lg">
       <ToastContainer />
       <dialog ref={dialogRef} className="h-[200px] w-[500px] border-none backdrop:bg-black/35 rounded-xl">
       <div className="w-full h-full flex flex-col justify-evenly items-center">

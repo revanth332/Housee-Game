@@ -480,8 +480,8 @@ function App() {
   }
 
   return (
-    <div className="grid grid-cols-12 grid-rows-12 w-screen h-screen bg-slate-100 gap-3 p-3">
-      <dialog ref={dialogRef} className="bg-slate-100 p-5 rounded-xl w-[500px]">
+    <div className="grid grid-cols-12 grid-rows-12 w-screen h-screen bg-slate-100 gap-2 p-1 md:gap-3 md:p-3">
+      <dialog ref={dialogRef} className="shadow-[3px_-3px_6px_#a1a1a1,-3px_3px_6px_#ffffff] bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] p-5 rounded-xl w-[500px]">
         <form ref={formRef} onSubmit={handleSubmit}>
           <div className="mb-3">
             <label
@@ -493,7 +493,7 @@ function App() {
             <select
               name="type"
               id="type"
-              className="mt-1 block w-full p-3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full p-3 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gradient-to-br outline-none from-[#cacaca] to-[#f0f0f0] shadow-[3px_3px_6px_#bebebe,-3px_-3px_6px_#ffffff]"
               required
             >
               <option value="createRoom">Create Room</option>
@@ -511,7 +511,7 @@ function App() {
               type="text"
               name="enterRoom"
               id="enterRoom"
-              className="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="bg-gradient-to-br outline-none from-[#cacaca] to-[#f0f0f0] shadow-[3px_3px_6px_#bebebe,-3px_-3px_6px_#ffffff] mt-1 p-3 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Enter room code"
               required
             />
@@ -527,7 +527,7 @@ function App() {
               type="text"
               name="username"
               id="username"
-              className="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="bg-gradient-to-br outline-none from-[#cacaca] to-[#f0f0f0] shadow-[3px_3px_6px_#bebebe,-3px_-3px_6px_#ffffff] mt-1 p-3 block w-full rounded-md border-gray-300 sm:text-sm"
               placeholder="Enter username"
               required
             />
