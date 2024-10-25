@@ -126,33 +126,34 @@ function App() {
 
     socket.emit("entered", role, roomNo, username);
 
-    socket.on("entered", (role, room, user) => {
+    socket.on("entered", (role, room, updatedUsers : user[]) => {
+      console.log(updatedUsers)
       if (role === "guest" && room === roomNo) {
         // console.log(users,username);
         // const newUsers = [{username,micAllowed:false},{username:user,micAllowed:false},...users.filter(user => user.username != username && user.username != "")];
         // localStorage.setItem("users",JSON.stringify(newUsers));
         setUsers(() => {
-          const newUsers = [
-            { username, micAllowed: false },
-            { username: user, micAllowed: false },
-            ...users.filter(
-              (user) => user.username != username && user.username != ""
-            ),
-          ];
+          // const newUsers = [
+          //   { username : username, micAllowed: allowTalk },
+          //   ...updatedUsers?.filter(
+          //     (user : user) => user.username != username && user.username != ""
+          //   ),
+          // ];
+          const newUsers = updatedUsers;
           localStorage.setItem("users", JSON.stringify(newUsers));
-          const uniqueUsers = newUsers.reduce((acc: user[], user: user) => {
-            // Check if user already exists in accumulator
-            if (
-              !acc.some(
-                (existingUser: user) => existingUser.username === user.username
-              )
-            ) {
-              acc.push(user);
-            }
-            return acc;
-          }, []);
+          // const uniqueUsers = newUsers.reduce((acc: user[], user: user) => {
+          //   // Check if user already exists in accumulator
+          //   if (
+          //     !acc.some(
+          //       (existingUser: user) => existingUser.username === user.username
+          //     )
+          //   ) {
+          //     acc.push(user);
+          //   }
+          //   return acc;
+          // }, []);
           // console.log(uniqueUsers)
-          return uniqueUsers;
+          return newUsers;
         });
         // setUsers(newUsers);
       }
@@ -164,12 +165,12 @@ function App() {
       }
     });
 
-    socket.on("exit", (exitedUser, exitedRoom, exitedRole) => {
+    socket.on("exit", (remainUsers, exitedRoom, exitedRole) => {
       if (exitedRoom === roomNo) {
         if (exitedRole === "host") {
           clearFields();
         } else if (exitedRole === "guest") {
-          setUsers([...users.filter((user) => user.username !== exitedUser)]);
+          setUsers(() => remainUsers);
         }
       }
     });
@@ -375,23 +376,23 @@ function App() {
       setCount(JSON.parse(count));
       setUsers(() => {
         var newUsers = JSON.parse(users);
-        newUsers = [
-          { username: username, micAllowed: false },
-          ...newUsers.filter((u: user) => u.username !== username),
-        ];
-        const uniqueUsers = newUsers.reduce((acc: user[], user: user) => {
-          // Check if user already exists in accumulator
-          if (
-            !acc.some(
-              (existingUser: user) => existingUser.username === user.username
-            )
-          ) {
-            acc.push(user);
-          }
-          return acc;
-        }, []);
+        // newUsers = [
+        //   { username: username, micAllowed: false },
+        //   ...newUsers.filter((u: user) => u.username !== username),
+        // ];
+        // const uniqueUsers = newUsers.reduce((acc: user[], user: user) => {
+        //   // Check if user already exists in accumulator
+        //   if (
+        //     !acc.some(
+        //       (existingUser: user) => existingUser.username === user.username
+        //     )
+        //   ) {
+        //     acc.push(user);
+        //   }
+        //   return acc;
+        // }, []);
         // console.log(uniqueUsers)
-        return uniqueUsers;
+        return newUsers;
       });
       setUsername(username);
       setLogged(true);
