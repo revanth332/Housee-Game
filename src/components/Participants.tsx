@@ -15,11 +15,11 @@ export default function Participants({
     const [searchTerm,setSearchTerm] = useState<string>("");
     const [orderedUsers,setOrderedUsers] = useState<user []>([])
     const filteredUsers = orderedUsers?.filter(user => user.username.includes(searchTerm))
-    
+
     useEffect(() => {
         setOrderedUsers(() => {
-          const currentUser = users.find((user : user) => user.username === username);
-          const otherUsers =  users.filter((user : user) => user.username !== username);
+          const currentUser = users?.find((user : user) => user.username === username);
+          const otherUsers =  users?.filter((user : user) => user.username !== username);
           const newUsers =  currentUser ? [currentUser, ...otherUsers] : otherUsers;
           return newUsers;
         })
