@@ -164,11 +164,18 @@ export default function Board({
 
   useEffect(() => {
     // console.log("row1",row1Status)
-    if (housee || exitMessage.includes("has")) {
+    if (housee) {
       dialogRef.current?.showModal();
       emitGameCompleteSignal();
     }
-  }, [housee, exitMessage]);
+  }, [housee]);
+
+  useEffect(() => {
+    // For remaining users
+    if (exitMessage.includes("has")) {
+      dialogRef.current?.showModal();
+    }
+  },[exitMessage]) 
 
   useEffect(() => {
     // console.log("row2",row2Status)
