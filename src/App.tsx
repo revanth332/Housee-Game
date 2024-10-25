@@ -7,7 +7,7 @@ import { useRef } from "react";
 import axios from "axios";
 import Participants from "./components/Participants";
 import Header from "./components/Header";
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
 const URL = import.meta.env.VITE_SOCKET_URL;
 
@@ -16,14 +16,14 @@ export const randomNumberInRange = (min: number, max: number) => {
 };
 
 type tile = {
-  number:number,
-  marked:boolean
-}
+  number: number;
+  marked: boolean;
+};
 
 export type user = {
-  username : string,
-  micAllowed : boolean,
-}
+  username: string;
+  micAllowed: boolean;
+};
 
 function App() {
   const [randomNum, setRandomNum] = useState(0);
@@ -34,67 +34,69 @@ function App() {
   const [role, setRole] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [roomNo, setRoomNo] = useState<string>("");
-  const [totalTiles,setTotalTiles] = useState<tile []>([])
-  const [users,setUsers] = useState<user []>([])
-  const [logged,setLogged] = useState(false);
-  const [username,setUsername] = useState("");
-  const [isLoading,setIsLoading] = useState(false)
-  const [allowTalk,setAllowTalk] = useState(false)
+  const [totalTiles, setTotalTiles] = useState<tile[]>([]);
+  const [users, setUsers] = useState<user[]>([]);
+  const [logged, setLogged] = useState(false);
+  const [username, setUsername] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [allowTalk, setAllowTalk] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const [clicked,setClicked] = useState(false);
-  const [exitMessage,setExitMessage] = useState<string>("🎊🎉✨Yayy! Housee!!!!")
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [clicked, setClicked] = useState(false);
+  const [exitMessage, setExitMessage] = useState<string>(
+    "🎊🎉✨Yayy! Housee!!!!"
+  );
 
   const handleClick = () => {
-    setClicked(prev => {
+    setClicked((prev) => {
       const newVal = !prev;
       setTimeout(() => {
-        setClicked(prev => !prev)
-      },100)
+        setClicked((prev) => !prev);
+      }, 100);
       return newVal;
     });
-  }
+  };
 
   const emitGameCompleteSignal = () => {
-    socket.emit("win",username,roomNo);
-  }
+    socket.emit("win", username, roomNo);
+  };
 
   const clearFields = () => {
     localStorage.clear();
     dialogRef.current?.showModal();
     setLogged(false);
     setRandomNum(0);
-    setgenNums([])
-    setStore([])
-    setCount(-1)
-    setRole("")
-    setRoomNo("")
-    setTotalTiles([])
-    setUsers([])
-    setUsername("")
-    if(formRef.current){
+    setgenNums([]);
+    setStore([]);
+    setCount(-1);
+    setRole("");
+    setRoomNo("");
+    setTotalTiles([]);
+    setUsers([]);
+    setUsername("");
+    setExitMessage("🎊🎉✨Yayy! Housee!!!!");
+    if (formRef.current) {
       formRef.current.reset();
     }
-  }
+  };
 
   const logout = () => {
     clearFields();
-    socket.emit("exit",username,roomNo,role);
-  }
+    socket.emit("exit", username, roomNo, role);
+  };
 
   const handleAllowTalk = () => {
-    setAllowTalk(prev => {
+    setAllowTalk((prev) => {
       const isAllowed = !prev;
-      if(isAllowed){
+      if (isAllowed) {
         startRecording();
-      }
-      else{
+      } else {
         stopRecording();
       }
-      socket.emit("micAllowed",username,roomNo,isAllowed);
+      socket.emit("micAllowed", username, roomNo, isAllowed);
       return isAllowed;
     });
-  }
+  };
 
   const setRandomNumber = () => {
     handleClick();
@@ -106,11 +108,14 @@ function App() {
         "genNums",
         JSON.stringify([...genNums, store[next]])
       );
-      localStorage.setItem("count",next.toString());
+      localStorage.setItem("count", next.toString());
 
       setRandomNum(store[next]);
-      setgenNums([...genNums,store[next]]);
-      socket.emit("housie", store[next], role, roomNo,[...genNums,store[next]]);
+      setgenNums([...genNums, store[next]]);
+      socket.emit("housie", store[next], role, roomNo, [
+        ...genNums,
+        store[next],
+      ]);
       return next;
     });
   };
@@ -119,53 +124,67 @@ function App() {
     socket.connect();
     // console.log("called",role);
 
-    socket.emit("entered",role,roomNo,username);
+    socket.emit("entered", role, roomNo, username);
 
-    socket.on("entered",(role,room,user) => {
-      if(role === "guest" && room === roomNo){
+    socket.on("entered", (role, room, user) => {
+      if (role === "guest" && room === roomNo) {
         // console.log(users,username);
         // const newUsers = [{username,micAllowed:false},{username:user,micAllowed:false},...users.filter(user => user.username != username && user.username != "")];
         // localStorage.setItem("users",JSON.stringify(newUsers));
         setUsers(() => {
-          const newUsers = [{username,micAllowed:false},{username:user,micAllowed:false},...users.filter(user => user.username != username && user.username != "")];
-          localStorage.setItem("users",JSON.stringify(newUsers));
-          const uniqueUsers = newUsers.reduce((acc : user[], user:user) => {
+          const newUsers = [
+            { username, micAllowed: false },
+            { username: user, micAllowed: false },
+            ...users.filter(
+              (user) => user.username != username && user.username != ""
+            ),
+          ];
+          localStorage.setItem("users", JSON.stringify(newUsers));
+          const uniqueUsers = newUsers.reduce((acc: user[], user: user) => {
             // Check if user already exists in accumulator
-            if (!acc.some((existingUser : user) => existingUser.username === user.username)) {
+            if (
+              !acc.some(
+                (existingUser: user) => existingUser.username === user.username
+              )
+            ) {
               acc.push(user);
             }
             return acc;
           }, []);
           // console.log(uniqueUsers)
           return uniqueUsers;
-        })
+        });
         // setUsers(newUsers);
       }
-      
-    })
+    });
 
-    socket.on("win",(user,room) => {
-      if(room === roomNo && localStorage.getItem("housee") === "false"){
-        setExitMessage(user + " has won the game 🎊🎉✨")
+    socket.on("win", (user, room) => {
+      if (room === roomNo && localStorage.getItem("housee") === "false") {
+        setExitMessage(user + " has won the game 🎊🎉✨");
       }
-    })
+    });
 
-    socket.on("exit",(exitedUser,exitedRoom,exitedRole) => {
-      if(exitedRoom === roomNo){
-        if(exitedRole === "host"){
+    socket.on("exit", (exitedUser, exitedRoom, exitedRole) => {
+      if (exitedRoom === roomNo) {
+        if (exitedRole === "host") {
           clearFields();
-        }
-        else if(exitedRole === "guest"){
-          setUsers([...users.filter(user => user.username !== exitedUser)])
+        } else if (exitedRole === "guest") {
+          setUsers([...users.filter((user) => user.username !== exitedUser)]);
         }
       }
-    })
+    });
 
-    socket.on("micAllowed",(username,room,isAllowed) => {
-      if(room === roomNo){
-        setUsers(prev => prev.map(user => user.username === username ? ({...user,micAllowed:isAllowed}) : user));
+    socket.on("micAllowed", (username, room, isAllowed) => {
+      if (room === roomNo) {
+        setUsers((prev) =>
+          prev.map((user) =>
+            user.username === username
+              ? { ...user, micAllowed: isAllowed }
+              : user
+          )
+        );
       }
-    })
+    });
 
     // socket.on('connect', () => {
     //   navigator.mediaDevices.getUserMedia({ audio: true, video: false })
@@ -173,12 +192,11 @@ function App() {
     //         var madiaRecorder = new MediaRecorder(stream);
     //         var audioChunks :  Blob[] = [];
 
-    
     //         madiaRecorder.addEventListener("dataavailable", function (event) {
     //             audioChunks.push(event.data);
     //             // console.log("available")
     //         });
-    
+
     //         madiaRecorder.addEventListener("stop", function () {
     //             var audioBlob = new Blob(audioChunks);
     //             audioChunks = [];
@@ -188,13 +206,13 @@ function App() {
     //                 var base64String = fileReader.result;
     //                 socket.emit("audioStream", base64String,roomNo);
     //             };
-    
+
     //             madiaRecorder.start();
     //             setTimeout(function () {
     //                 madiaRecorder.stop();
     //             }, 1000);
     //         });
-    
+
     //         madiaRecorder.start();
     //         setTimeout(function () {
     //             madiaRecorder.stop();
@@ -204,64 +222,66 @@ function App() {
     //         console.error('Error capturing audio.', error);
     //     });
     // });
-    
-    socket.on('audioStream', (audioData,room) => {
-      if(room === roomNo){
+
+    socket.on("audioStream", (audioData, room) => {
+      if (room === roomNo) {
         // console.log("talking: "+room+" "+roomNo)
         var newData = audioData.split(";");
         newData[0] = "data:audio/ogg;";
         newData = newData[0] + newData[1];
-    
+
         var audio = new Audio(newData);
         // console.log(audio);
         if (!audio || document.hidden) {
-            // console.log("returned")
-            return;
+          // console.log("returned")
+          return;
         }
         audio.play();
       }
-
     });
 
-    socket.on("housie", (number: number, roomNo: string,genNums : number[],users : string[]) => {
-      // console.log(role,srole);
-      if (role === "guest" && roomNo === roomNo) {
-        // localStorage.setItem("randomNum",number.toString())
-        setCount((prev) => {
-          const next = prev + 1;
-          // console.log([...genNums, number],randomNum,count)
-          localStorage.setItem("randomNum", number.toString());
-          localStorage.setItem(
-            "genNums",
-            JSON.stringify([...genNums,number ])
-          );
-          localStorage.setItem("count",next.toString());
-          localStorage.setItem("users",JSON.stringify(users))
-          // setUsers(users)
-          setRandomNum(number);
-          setgenNums([...genNums, number]);
-          return next;
-        });
-        toast(`Number drawn: ${number}`);
+    socket.on(
+      "housie",
+      (number: number, roomNo: string, genNums: number[], users: string[]) => {
+        // console.log(role,srole);
+        if (role === "guest" && roomNo === roomNo) {
+          // localStorage.setItem("randomNum",number.toString())
+          setCount((prev) => {
+            const next = prev + 1;
+            // console.log([...genNums, number],randomNum,count)
+            localStorage.setItem("randomNum", number.toString());
+            localStorage.setItem(
+              "genNums",
+              JSON.stringify([...genNums, number])
+            );
+            localStorage.setItem("count", next.toString());
+            localStorage.setItem("users", JSON.stringify(users));
+            // setUsers(users)
+            setRandomNum(number);
+            setgenNums([...genNums, number]);
+            return next;
+          });
+        }
+        // else if(closed){
+        //   logout();
+        // }
       }
-      // else if(closed){
-      //   logout();
-      // }
-    });
+    );
 
     return () => {
       socket.off("housie");
       socket.disconnect();
     };
-  }, [role,roomNo,username]);
-  
-  const startRecording  = () => {
+  }, [role, roomNo, username]);
+
+  const startRecording = () => {
     // console.log("strted recording")
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-    .then((stream) => {
+    navigator.mediaDevices
+      .getUserMedia({ audio: true, video: false })
+      .then((stream) => {
         var mediaRecorder = new MediaRecorder(stream);
         mediaRecorderRef.current = mediaRecorder;
-        var audioChunks :  Blob[] = [];
+        var audioChunks: Blob[] = [];
         // audioChunksRef.current = audioChunks;
         // console.log("recording... "+mediaRecorder.state)
 
@@ -289,50 +309,52 @@ function App() {
         mediaRecorder.addEventListener("dataavailable", function (event) {
           audioChunks.push(event.data);
           // audioChunksRef.current.push(event.data);
-            // console.log("available")
+          // console.log("available")
         });
 
         mediaRecorder.addEventListener("stop", function () {
           // console.log("stopped")
-            // var audioBlob = new Blob(audioChunksRef.current);
-            var audioBlob = new Blob(audioChunks);
-            audioChunks = [];
-            var fileReader = new FileReader();
-            fileReader.readAsDataURL(audioBlob);
-            fileReader.onloadend = function () {
-                var base64String = fileReader.result;
-                socket.emit("audioStream", base64String,roomNo,username);
-            };
-            // console.log("allowtak jfejf: "+allowTalk)
-            if(allowTalk){
-              // console.log("allowed talk")
-            }
-            mediaRecorder.start();
-            setTimeout(function () {
-                mediaRecorder.stop();
-            }, 1000);
+          // var audioBlob = new Blob(audioChunksRef.current);
+          var audioBlob = new Blob(audioChunks);
+          audioChunks = [];
+          var fileReader = new FileReader();
+          fileReader.readAsDataURL(audioBlob);
+          fileReader.onloadend = function () {
+            var base64String = fileReader.result;
+            socket.emit("audioStream", base64String, roomNo, username);
+          };
+          // console.log("allowtak jfejf: "+allowTalk)
+          if (allowTalk) {
+            // console.log("allowed talk")
+          }
+          mediaRecorder.start();
+          setTimeout(function () {
+            mediaRecorder.stop();
+          }, 1000);
         });
 
         mediaRecorder.start();
         setTimeout(function () {
-            mediaRecorder.stop();
+          mediaRecorder.stop();
         }, 1000);
-    })
-    .catch((error) => {
-        console.error('Error capturing audio.', error);
-    });
-    
-  }
+      })
+      .catch((error) => {
+        console.error("Error capturing audio.", error);
+      });
+  };
 
   const stopRecording = () => {
     // console.log("stopping recording")
-    if(mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive'){
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
       // console.log("active")
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.ondataavailable = null;
       mediaRecorderRef.current = null;
     }
-  }
+  };
 
   useEffect(() => {
     const role = localStorage.getItem("role");
@@ -345,38 +367,44 @@ function App() {
     const users = localStorage.getItem("users");
     const username = localStorage.getItem("username");
 
-    if(role && roomNo && totalTiles && store && count && users && username){
+    if (role && roomNo && totalTiles && store && count && users && username) {
       setRole(role);
       setRoomNo(roomNo);
       setTotalTiles(JSON.parse(totalTiles));
-      setStore(JSON.parse(store))
+      setStore(JSON.parse(store));
       setCount(JSON.parse(count));
       setUsers(() => {
         var newUsers = JSON.parse(users);
-        newUsers = [{username : username,micAllowed:false},...newUsers.filter((u:user) => u.username !== username)]
-        const uniqueUsers = newUsers.reduce((acc : user[], user:user) => {
+        newUsers = [
+          { username: username, micAllowed: false },
+          ...newUsers.filter((u: user) => u.username !== username),
+        ];
+        const uniqueUsers = newUsers.reduce((acc: user[], user: user) => {
           // Check if user already exists in accumulator
-          if (!acc.some((existingUser : user) => existingUser.username === user.username)) {
+          if (
+            !acc.some(
+              (existingUser: user) => existingUser.username === user.username
+            )
+          ) {
             acc.push(user);
           }
           return acc;
         }, []);
         // console.log(uniqueUsers)
         return uniqueUsers;
-      })
+      });
       setUsername(username);
       setLogged(true);
       dialogRef?.current?.close();
-      if(randomNum && genNums){
+      if (randomNum && genNums) {
         setRandomNum(Number(randomNum));
         setgenNums(JSON.parse(genNums));
       }
-    }
-    else{
+    } else {
       dialogRef.current?.showModal();
     }
     // console.log(URL)
-  },[])
+  }, []);
 
   // useEffect(() => {
   //   console.log(genNums)
@@ -388,21 +416,23 @@ function App() {
     const type = formData.get("type");
     const roomCode = formData.get("enterRoom");
     var user = formData.get("username");
-    if(user) user = user.toString().charAt(0).toUpperCase()+user.toString().substring(1)
+    if (user)
+      user =
+        user.toString().charAt(0).toUpperCase() + user.toString().substring(1);
     setRole(() => (type === "createRoom" ? "host" : "guest"));
     setIsLoading(true);
     axios
       .post(`${URL}/api/room`, {
         type,
         roomCode,
-        user
+        user,
       })
       .then((response) => {
         // console.log("Success:", response.data);
         if (response.data.success) {
           setLogged(true);
-          if (user){
-            localStorage.setItem("username",user.toString());
+          if (user) {
+            localStorage.setItem("username", user.toString());
             setUsername(user.toString());
           }
           localStorage.setItem("users", JSON.stringify(response.data.users));
@@ -412,34 +442,42 @@ function App() {
             type === "createRoom" ? "host" : "guest"
           );
 
-          localStorage.setItem("count","-1");
+          localStorage.setItem("count", "-1");
 
           setUsers(() => {
-            var newUsers = [{username : user,micAllowed:false},...response.data.users.filter((u:user) => u.username !== user)]
-            const uniqueUsers = newUsers.reduce((acc : user[], user:user) => {
+            var newUsers = [
+              { username: user, micAllowed: false },
+              ...response.data.users.filter((u: user) => u.username !== user),
+            ];
+            const uniqueUsers = newUsers.reduce((acc: user[], user: user) => {
               // Check if user already exists in accumulator
-              if (!acc.some((existingUser : user) => existingUser.username === user.username)) {
+              if (
+                !acc.some(
+                  (existingUser: user) =>
+                    existingUser.username === user.username
+                )
+              ) {
                 acc.push(user);
               }
               return acc;
             }, []);
             // console.log(uniqueUsers)
             return uniqueUsers;
-          })
+          });
 
           // setUsers([{username : user,micAllowed:false},...response.data.users.filter((u:user) => u.username !== user)]);
-          setRoomNo(response.data.room);  
+          setRoomNo(response.data.room);
           setTotalTiles(() => {
             const newTiles = generateUniqueRandomNumbers();
-            localStorage.setItem("totalTiles",JSON.stringify(newTiles));
+            localStorage.setItem("totalTiles", JSON.stringify(newTiles));
             return newTiles;
           });
           setStore(() => {
             const newStore = generateRanNums();
-            localStorage.setItem("store",JSON.stringify(newStore));
+            localStorage.setItem("store", JSON.stringify(newStore));
             return newStore;
           });
-          localStorage.setItem("genNums",JSON.stringify([]))
+          localStorage.setItem("genNums", JSON.stringify([]));
           toast.success("Welcome to Housie!!!");
           dialogRef.current?.close();
         } else {
@@ -451,8 +489,8 @@ function App() {
         toast.error("Failed to send room details.");
       })
       .finally(() => {
-        setIsLoading(false)
-      })
+        setIsLoading(false);
+      });
   };
 
   const generateRanNums = () => {
@@ -467,21 +505,29 @@ function App() {
   };
 
   const generateUniqueRandomNumbers = () => {
-    var newNumbers:number[] = [];
+    var newNumbers: number[] = [];
     while (newNumbers.length < 27) {
       let index = newNumbers.length;
-      const randomNumber = randomNumberInRange(((index % 9) * 10) + 1, ((index % 9) * 10) + 9);
+      const randomNumber = randomNumberInRange(
+        (index % 9) * 10 + 1,
+        (index % 9) * 10 + 9
+      );
       if (!newNumbers.includes(randomNumber)) {
         newNumbers.push(randomNumber);
       }
     }
-    const tiles = newNumbers.map(num => { return {number:num,marked:false}})
+    const tiles = newNumbers.map((num) => {
+      return { number: num, marked: false };
+    });
     return tiles;
-  }
+  };
 
   return (
-    <div className="grid grid-cols-12 grid-rows-12 w-screen h-screen bg-slate-100 gap-2 p-1 md:gap-3 md:p-3">
-      <dialog ref={dialogRef} className="shadow-[3px_-3px_6px_#a1a1a1,-3px_3px_6px_#ffffff] bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] p-5 rounded-xl w-[500px]">
+    <div className="grid grid-cols-12 grid-rows-12 w-screen h-screen bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] gap-2 p-1 md:gap-3 md:p-3">
+      <dialog
+        ref={dialogRef}
+        className="shadow-[3px_-3px_6px_#a1a1a1,-3px_3px_6px_#ffffff] bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] p-5 rounded-xl w-[500px]"
+      >
         <form ref={formRef} onSubmit={handleSubmit}>
           <div className="mb-3">
             <label
@@ -537,37 +583,44 @@ function App() {
               type="submit"
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              {
-                isLoading ? <Loader2 className="text-white animate-spin"/> : "Submit"
-              
-              }
+              {isLoading ? (
+                <Loader2 className="text-white animate-spin" />
+              ) : (
+                "Submit"
+              )}
             </button>
-            
           </div>
           {error && (
             <div className="text-red-500 text-center mt-3">{error}</div>
           )}
         </form>
       </dialog>
-      {
-        logged && <>
-        <Sidebar
-        role={role}
-        randomNum={randomNum}
-        setRandomNumber={setRandomNumber}
-        clicked={clicked}
-      />
-      <Header logout={logout} />
-      <Board exitMessage={exitMessage} emitGameCompleteSignal={emitGameCompleteSignal} logout={logout} setTotalTiles={setTotalTiles} totalTiles={totalTiles} randomNum={randomNum} genNums={genNums} />
-      <Participants
-        users={users}
-        allowTalk={allowTalk}
-        handleAllowTalk={handleAllowTalk}
-        username={username}
-      />
+      {logged && (
+        <>
+          <Sidebar
+            role={role}
+            randomNum={randomNum}
+            setRandomNumber={setRandomNumber}
+            clicked={clicked}
+          />
+          <Header logout={logout} />
+          <Board
+            exitMessage={exitMessage}
+            emitGameCompleteSignal={emitGameCompleteSignal}
+            logout={logout}
+            setTotalTiles={setTotalTiles}
+            totalTiles={totalTiles}
+            randomNum={randomNum}
+            genNums={genNums}
+          />
+          <Participants
+            users={users}
+            allowTalk={allowTalk}
+            handleAllowTalk={handleAllowTalk}
+            username={username}
+          />
         </>
-      }
-      
+      )}
     </div>
   );
 }
