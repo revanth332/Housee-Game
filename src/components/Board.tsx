@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { randomNumberInRange } from "../App";
 import Tile from "./Tile";
 import { ToastContainer, toast } from "react-toastify";
+import { socket } from "./Socket";
 
 type tile = {
   number: number;
@@ -36,6 +37,42 @@ export default function Board({
   const [housee, setHousee] = useState(false);
 
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+
+  const username = localStorage.getItem("username");
+  const roomNo = localStorage.getItem("room");
+
+  // useEffect(() => {
+  //   socket
+  // })
+
+  
+  useEffect(() => {
+    socket.connect();
+
+    socket.on("jaldi5",(user,room) => {
+      if(roomNo === room){
+        console.log(user+" completed jaldi 5")
+        toast.success(user + " completed jaldi 5")
+      }
+    })
+
+    socket.on("row1Status",(user,room) => {
+      if(roomNo === room){
+        toast.success(user + " completed Row 1")
+      }
+    })
+
+    socket.on("row2Status",(user,room) => {
+      if(roomNo === room){
+        toast.success(user + " completed Row 2")
+      }
+    })
+
+    return () => {
+      socket.off("housie");
+      socket.disconnect();
+    };
+  },[])
 
   useEffect(() => {
     if (
@@ -101,16 +138,19 @@ export default function Board({
         setJaldi5(() => {
           const bool = markedCount === 5;
           localStorage.setItem("jaldi5", bool + "");
+          socket.emit("jaldi5",username,roomNo);
           return bool;
         });
         setRow1Status(() => {
           const bool = Row1Count === 5;
           localStorage.setItem("row1Status", bool + "");
+          socket.emit("row1Status",username,roomNo);
           return bool;
         });
         setRow2Status(() => {
           const bool = Row2Count === 5;
           localStorage.setItem("row2Status", bool + "");
+          socket.emit("row2Status",username,roomNo);
           return bool;
         });
         setRow3Status(() => {
@@ -193,7 +233,7 @@ export default function Board({
   };
 
   return (
-    <div className="flex flex-col justify-center col-span-full row-start-7 row-end-13 md:col-span-9 md:row-span-11 items-center shadow-[3px_-3px_6px_#a1a1a1,-3px_3px_6px_#ffffff] bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] md:rounded-2xl rounded-lg">
+    <div className="flex flex-col justify-center col-span-full row-start-7 row-end-13 md:col-span-9 md:row-span-11 items-center bg-softColor shadow-softShadow md:rounded-2xl rounded-lg">
       <ToastContainer />
       <dialog
         ref={dialogRef}

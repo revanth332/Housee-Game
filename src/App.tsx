@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Board from "./components/Board";
 import Sidebar from "./components/Sidebar";
 import { socket } from "./components/Socket";
-import { toast } from "react-toastify";
+import {  toast } from "react-toastify";
 import { useRef } from "react";
 import axios from "axios";
 import Participants from "./components/Participants";
@@ -46,6 +46,7 @@ function App() {
   const [exitMessage, setExitMessage] = useState<string>(
     "🎊🎉✨Yayy! Housee!!!!"
   );
+  const [intervalId, setIntervalId] = useState<number>(0);
 
   const handleClick = () => {
     setClicked((prev) => {
@@ -100,24 +101,29 @@ function App() {
 
   const setRandomNumber = () => {
     handleClick();
-    setCount((prev) => {
-      const next = prev + 1;
-
-      localStorage.setItem("randomNum", store[next].toString());
-      localStorage.setItem(
-        "genNums",
-        JSON.stringify([...genNums, store[next]])
-      );
-      localStorage.setItem("count", next.toString());
-
-      setRandomNum(store[next]);
-      setgenNums([...genNums, store[next]]);
-      socket.emit("housie", store[next], role, roomNo, [
-        ...genNums,
-        store[next],
-      ]);
-      return next;
-    });
+    if (!intervalId) {
+      const newIntervalId = setInterval(() => {
+        setCount((prev) => {
+          const next = prev + 1;
+    
+          localStorage.setItem("randomNum", store[next].toString());
+          localStorage.setItem(
+            "genNums",
+            JSON.stringify([...genNums, store[next]])
+          );
+          localStorage.setItem("count", next.toString());
+    
+          setRandomNum(store[next]);
+          setgenNums([...genNums, store[next]]);
+          socket.emit("housie", store[next], role, roomNo, [
+            ...genNums,
+            store[next],
+          ]);
+          return next;
+        });
+      }, 10000); 
+      setIntervalId(newIntervalId);
+    }
   };
 
   useEffect(() => {
@@ -524,10 +530,11 @@ function App() {
   };
 
   return (
-    <div className="grid grid-cols-12 grid-rows-12 w-screen h-screen bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] gap-2 p-1 md:gap-3 md:p-3">
+    <div className="grid grid-cols-12 grid-rows-12 w-screen h-screen bg-softColor gap-2 p-1 md:gap-3 md:p-3">
+
       <dialog
         ref={dialogRef}
-        className="shadow-[3px_-3px_6px_#a1a1a1,-3px_3px_6px_#ffffff] bg-gradient-to-br from-[#f0f0f0] to-[#cacaca] p-5 rounded-xl w-[500px]"
+        className="shadow-softShadow bg-softColor p-5 rounded-xl w-[500px]"
       >
         <form ref={formRef} onSubmit={handleSubmit}>
           <div className="mb-3">
@@ -540,7 +547,7 @@ function App() {
             <select
               name="type"
               id="type"
-              className="mt-1 block w-full p-3 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gradient-to-br outline-none from-[#cacaca] to-[#f0f0f0] shadow-[3px_3px_6px_#bebebe,-3px_-3px_6px_#ffffff]"
+              className="bg-softColor shadow-softShdowInner mt-1 block w-full p-3 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm outline-none"
               required
             >
               <option value="createRoom">Create Room</option>
@@ -558,7 +565,7 @@ function App() {
               type="text"
               name="enterRoom"
               id="enterRoom"
-              className="bg-gradient-to-br outline-none from-[#cacaca] to-[#f0f0f0] shadow-[3px_3px_6px_#bebebe,-3px_-3px_6px_#ffffff] mt-1 p-3 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="bg-softColor shadow-softShdowInner outline-none mt-1 p-3 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Enter room code"
               required
             />
@@ -574,7 +581,7 @@ function App() {
               type="text"
               name="username"
               id="username"
-              className="bg-gradient-to-br outline-none from-[#cacaca] to-[#f0f0f0] shadow-[3px_3px_6px_#bebebe,-3px_-3px_6px_#ffffff] mt-1 p-3 block w-full rounded-md border-gray-300 sm:text-sm"
+              className="bg-softColor shadow-softShdowInner outline-none mt-1 p-3 block w-full rounded-md border-gray-300 sm:text-sm"
               placeholder="Enter username"
               required
             />

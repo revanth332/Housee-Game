@@ -1,5 +1,5 @@
 import { FiCheck } from "react-icons/fi";
-const commonStyle = "h-9 w-9 md:w-16 md:h-16 m-2 rounded-full bg-gradient-to-br from-[#cacaca] to-[#f0f0f0] hover:shadow-none shadow-[3px_-3px_6px_#a1a1a1,-3px_3px_6px_#ffffff]"
+const commonStyle = "h-9 w-9 md:w-16 md:h-16 m-2 rounded-full hover:shadow-softShdowInner bg-softColor shadow-softShadow"
 export default function Tile({genNums,number,marked,appear,makeMark}:{genNums:number[],number : number,marked:boolean,appear:boolean,makeMark:(num:number) => void}) {
   return (
     appear ? 
