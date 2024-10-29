@@ -178,12 +178,10 @@ function App() {
               "genNums",
               JSON.stringify(newVal)
             );
+            socket.emit("housie", store[next], role, roomNo,newVal);
             return newVal;
         });
-          socket.emit("housie", store[next], role, roomNo, [
-            ...genNums,
-            store[next],
-          ]);
+          
           
           if(next === store.length - 1){
             clearInterval(intervalId);
