@@ -50,6 +50,32 @@ function App() {
   const [counter,setCounter] = useState<number>(5);
   const [counterInterval,setCounterInterval] = useState<number>(0)
 
+  const [jaldi5Winner,setJaldi5Winner] = useState("");
+  const [row1Winner,setRow1Winner] = useState("");
+  const [row2Winner,setRow2Winner] = useState("");
+  const [row3Winner,setRow3Winner] = useState("");
+
+  const emitJaldi5 = () => {
+    setJaldi5Winner(username);
+    localStorage.setItem("jaldi5Finished",username);
+    socket.emit("jaldi5",username,roomNo);
+  }
+  const emitRow1Complete = () => {
+    setRow1Winner(username)
+    localStorage.setItem("row1Finished",username);
+    socket.emit("row1Complete",username,roomNo);
+  }
+  const emitRow2Complete = () => {
+    setRow2Winner(username)
+    localStorage.setItem("row2Finished",username);
+    socket.emit("row2Complete",username,roomNo);
+  }
+  const emitRow3Complete = () => {
+    setRow3Winner(username);
+    localStorage.setItem("row3Finished",username);
+    socket.emit("row3Complete",username,roomNo);
+  }
+
   const handleClick = () => {
     setClicked((prev) => {
       const newVal = !prev;
@@ -86,6 +112,13 @@ function App() {
     setUsers([]);
     setUsername("");
     setExitMessage("🎊🎉✨Yayy! Housee!!!!");
+    setCounter(0);
+    setCounterInterval(0);
+    setIntervalId(0);
+    setRow1Winner("");
+    setRow2Winner("");
+    setRow3Winner("");
+    setJaldi5Winner("");
     if (formRef.current) {
       formRef.current.reset();
     }
@@ -121,6 +154,7 @@ function App() {
             newCounterVal = 5;
           }
           localStorage.setItem("counter",JSON.stringify(newCounterVal));
+          socket.emit("counter",newCounterVal,roomNo);
           return newCounterVal;
         })
       },1000)
@@ -133,7 +167,7 @@ function App() {
       const newIntervalId = setInterval(() => {
         setCount((prev) => {
           const next = prev + 1;
-    
+          
           localStorage.setItem("randomNum", store[next].toString());
           localStorage.setItem("count", next.toString());
     
@@ -150,6 +184,11 @@ function App() {
             ...genNums,
             store[next],
           ]);
+          
+          if(next === store.length - 1){
+            clearInterval(intervalId);
+          }
+
           return next;
         });
       }, 5000); 
@@ -177,35 +216,48 @@ function App() {
     socket.on("entered", (role, room, updatedUsers : user[]) => {
       console.log(updatedUsers)
       if (role === "guest" && room === roomNo) {
-        // console.log(users,username);
-        // const newUsers = [{username,micAllowed:false},{username:user,micAllowed:false},...users.filter(user => user.username != username && user.username != "")];
-        // localStorage.setItem("users",JSON.stringify(newUsers));
         setUsers(() => {
-          // const newUsers = [
-          //   { username : username, micAllowed: allowTalk },
-          //   ...updatedUsers?.filter(
-          //     (user : user) => user.username != username && user.username != ""
-          //   ),
-          // ];
           const newUsers = updatedUsers;
           localStorage.setItem("users", JSON.stringify(newUsers));
-          // const uniqueUsers = newUsers.reduce((acc: user[], user: user) => {
-          //   // Check if user already exists in accumulator
-          //   if (
-          //     !acc.some(
-          //       (existingUser: user) => existingUser.username === user.username
-          //     )
-          //   ) {
-          //     acc.push(user);
-          //   }
-          //   return acc;
-          // }, []);
-          // console.log(uniqueUsers)
           return newUsers;
         });
         // setUsers(newUsers);
       }
     });
+
+    socket.on("counter",(counterval,room) => {
+      if(room === roomNo) setCounter(counterval);
+    })
+
+    socket.on("jaldi5",(user,room) => {
+      if(room === roomNo){
+        console.log(user + " completed Jaldi 5");
+        localStorage.setItem("jaldi5Finished",user);
+        setJaldi5Winner(user)
+        toast(user + " completed Jaldi 5")
+      }
+    })
+    socket.on("row1Complete",(user,room) => {
+      if(room === roomNo){
+        localStorage.setItem("row1Finished",user);
+        setRow1Winner(user);
+        toast(user + " completed Row 1")
+      }
+    })
+    socket.on("row2Complete",(user,room) => {
+      if(room === roomNo){
+        localStorage.setItem("row2Finished",user);
+        setRow2Winner(user);
+        toast(user + " completed Row 2")
+      }
+    })
+    socket.on("row3Complete",(user,room) => {
+      if(room === roomNo){
+        localStorage.setItem("row3Finished",user);
+        setRow3Winner(user);
+        toast(user + " completed Row 3")
+      }
+    })
 
     socket.on("win", (user, room) => {
       if (room === roomNo && localStorage.getItem("housee") === "false") {
@@ -295,29 +347,6 @@ function App() {
         mediaRecorderRef.current = mediaRecorder;
         var audioChunks: Blob[] = [];
 
-        // console.log("recording... "+mediaRecorder.state)
-
-        // mediaRecorder.ondataavailable = (event) => {
-        //   audioChunksRef.current.push(event.data);
-        //   console.log("hello")
-        //   const audioBlob = new Blob(audioChunksRef.current);
-        //   const fileReader = new FileReader();
-        //   fileReader.readAsDataURL(audioBlob);
-
-        //   fileReader.onloadend = () => {
-        //     const base64AudioData = fileReader.result;
-        //     if (base64AudioData) {
-        //       console.log("base64")
-        //       // Emit audio data via socket to the server
-        //       socket.emit("audioStream", base64AudioData, roomNo);
-        //     }
-        //     audioChunksRef.current = [];
-        //   };
-
-        //   // Clear the audio chunks to avoid storing too much data in memory
-        //   // audioChunksRef.current = [];
-        // };
-
         mediaRecorder.addEventListener("dataavailable", function (event) {
           audioChunks.push(event.data);
           // audioChunksRef.current.push(event.data);
@@ -380,6 +409,10 @@ function App() {
     const username = localStorage.getItem("username");
     // const isGameStarted = localStorage.getItem("isGameStarted")
     const counterVal = localStorage.getItem("counter");
+    const currentJaldi5Winner = localStorage.getItem("jaldi5Finished")
+    const currentRow1Winner = localStorage.getItem("row1Finished")
+    const currentRow2Winner = localStorage.getItem("row2Finished")
+    const currentRow3Winner = localStorage.getItem("row3Finished")
 
     if (role && roomNo && totalTiles && store && count && users && username) {
       setRole(role);
@@ -391,7 +424,11 @@ function App() {
         var newUsers = JSON.parse(users);
         return newUsers;
       });
-      if(counterVal) setCounter(JSON.parse(counterVal)) 
+      if(counterVal) setCounter(JSON.parse(counterVal))
+      if(currentJaldi5Winner) setJaldi5Winner(currentJaldi5Winner)
+      if(currentRow1Winner) setRow1Winner(currentRow1Winner)
+      if(currentRow2Winner) setRow2Winner(currentRow2Winner)
+      if(currentRow3Winner) setRow3Winner(currentRow3Winner)
       setUsername(username);
       setLogged(true);
       dialogRef?.current?.close();
@@ -611,6 +648,14 @@ function App() {
             totalTiles={totalTiles}
             randomNum={randomNum}
             genNums={genNums}
+            emitJaldi5={emitJaldi5}
+            emitRow1Complete={emitRow1Complete}
+            emitRow2Complete={emitRow2Complete}
+            emitRow3Complete={emitRow3Complete}
+            jaldi5Winner={jaldi5Winner}
+            row1Winner={row1Winner}
+            row2Winner={row2Winner}
+            row3Winner={row3Winner}
           />
           <Participants
             users={users}
