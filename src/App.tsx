@@ -378,7 +378,7 @@ function App() {
     const count = localStorage.getItem("count");
     const users = localStorage.getItem("users");
     const username = localStorage.getItem("username");
-    const isGameStarted = localStorage.getItem("isGameStarted")
+    // const isGameStarted = localStorage.getItem("isGameStarted")
     const counterVal = localStorage.getItem("counter");
 
     if (role && roomNo && totalTiles && store && count && users && username) {
@@ -405,9 +405,6 @@ function App() {
     // console.log(URL)
   }, []);
 
-  // useEffect(() => {
-  //   console.log(genNums)
-  // },[genNums])
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
