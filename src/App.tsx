@@ -47,13 +47,23 @@ function App() {
     "🎊🎉✨Yayy! Housee!!!!"
   );
   const [intervalId, setIntervalId] = useState<number>(0);
+  const [counter,setCounter] = useState<number>(5);
+  const [counterInterval,setCounterInterval] = useState<number>(0)
 
   const handleClick = () => {
     setClicked((prev) => {
       const newVal = !prev;
-      setTimeout(() => {
-        setClicked((prev) => !prev);
-      }, 100);
+      localStorage.setItem("isGameStarted",JSON.stringify(newVal));
+      if(!newVal){
+        if(intervalId){
+          clearInterval(intervalId);
+          setIntervalId(0);
+        }
+        if(counterInterval){
+          clearInterval(counterInterval);
+          setCounterInterval(0);
+        }
+      }
       return newVal;
     });
   };
@@ -101,30 +111,62 @@ function App() {
 
   const setRandomNumber = () => {
     handleClick();
+    console.log("inside setr");
+
+    if(!counterInterval){
+      const newIntervalId = setInterval(() => {
+        setCounter(prev => {
+          let newCounterVal = prev-1;
+          if(newCounterVal === 0){
+            newCounterVal = 5;
+          }
+          localStorage.setItem("counter",JSON.stringify(newCounterVal));
+          return newCounterVal;
+        })
+      },1000)
+      setCounterInterval(newIntervalId);
+    }
+
     if (!intervalId) {
+      console.log("inside inter");
+      
       const newIntervalId = setInterval(() => {
         setCount((prev) => {
           const next = prev + 1;
     
           localStorage.setItem("randomNum", store[next].toString());
-          localStorage.setItem(
-            "genNums",
-            JSON.stringify([...genNums, store[next]])
-          );
           localStorage.setItem("count", next.toString());
     
           setRandomNum(store[next]);
-          setgenNums([...genNums, store[next]]);
+          setgenNums(prev => {
+            const newVal = [...prev, store[next]];
+            localStorage.setItem(
+              "genNums",
+              JSON.stringify(newVal)
+            );
+            return newVal;
+        });
           socket.emit("housie", store[next], role, roomNo, [
             ...genNums,
             store[next],
           ]);
           return next;
         });
-      }, 10000); 
+      }, 5000); 
       setIntervalId(newIntervalId);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      if (counterInterval) {
+        clearInterval(counterInterval);
+      }
+    };
+  }, [intervalId]);
 
   useEffect(() => {
     socket.connect();
@@ -193,43 +235,6 @@ function App() {
       }
     });
 
-    // socket.on('connect', () => {
-    //   navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-    //     .then((stream) => {
-    //         var madiaRecorder = new MediaRecorder(stream);
-    //         var audioChunks :  Blob[] = [];
-
-    //         madiaRecorder.addEventListener("dataavailable", function (event) {
-    //             audioChunks.push(event.data);
-    //             // console.log("available")
-    //         });
-
-    //         madiaRecorder.addEventListener("stop", function () {
-    //             var audioBlob = new Blob(audioChunks);
-    //             audioChunks = [];
-    //             var fileReader = new FileReader();
-    //             fileReader.readAsDataURL(audioBlob);
-    //             fileReader.onloadend = function () {
-    //                 var base64String = fileReader.result;
-    //                 socket.emit("audioStream", base64String,roomNo);
-    //             };
-
-    //             madiaRecorder.start();
-    //             setTimeout(function () {
-    //                 madiaRecorder.stop();
-    //             }, 1000);
-    //         });
-
-    //         madiaRecorder.start();
-    //         setTimeout(function () {
-    //             madiaRecorder.stop();
-    //         }, 1000);
-    //     })
-    //     .catch((error) => {
-    //         console.error('Error capturing audio.', error);
-    //     });
-    // });
-
     socket.on("audioStream", (audioData, room) => {
       if (room === roomNo) {
         // console.log("talking: "+room+" "+roomNo)
@@ -289,7 +294,7 @@ function App() {
         var mediaRecorder = new MediaRecorder(stream);
         mediaRecorderRef.current = mediaRecorder;
         var audioChunks: Blob[] = [];
-        // audioChunksRef.current = audioChunks;
+
         // console.log("recording... "+mediaRecorder.state)
 
         // mediaRecorder.ondataavailable = (event) => {
@@ -373,6 +378,8 @@ function App() {
     const count = localStorage.getItem("count");
     const users = localStorage.getItem("users");
     const username = localStorage.getItem("username");
+    const isGameStarted = localStorage.getItem("isGameStarted")
+    const counterVal = localStorage.getItem("counter");
 
     if (role && roomNo && totalTiles && store && count && users && username) {
       setRole(role);
@@ -382,24 +389,9 @@ function App() {
       setCount(JSON.parse(count));
       setUsers(() => {
         var newUsers = JSON.parse(users);
-        // newUsers = [
-        //   { username: username, micAllowed: false },
-        //   ...newUsers.filter((u: user) => u.username !== username),
-        // ];
-        // const uniqueUsers = newUsers.reduce((acc: user[], user: user) => {
-        //   // Check if user already exists in accumulator
-        //   if (
-        //     !acc.some(
-        //       (existingUser: user) => existingUser.username === user.username
-        //     )
-        //   ) {
-        //     acc.push(user);
-        //   }
-        //   return acc;
-        // }, []);
-        // console.log(uniqueUsers)
         return newUsers;
       });
+      if(counterVal) setCounter(JSON.parse(counterVal)) 
       setUsername(username);
       setLogged(true);
       dialogRef?.current?.close();
@@ -610,6 +602,8 @@ function App() {
             randomNum={randomNum}
             setRandomNumber={setRandomNumber}
             clicked={clicked}
+            handleClick={handleClick}
+            counter={counter}
           />
           <Header logout={logout} />
           <Board

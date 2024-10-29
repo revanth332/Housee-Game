@@ -14,7 +14,7 @@ export default {
       },
       colors:{
         softColor:"#e8e8e8",
-      }
+      },
     },
   },
   plugins: [],
