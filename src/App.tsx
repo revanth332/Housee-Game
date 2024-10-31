@@ -15,15 +15,71 @@ export const randomNumberInRange = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-type tile = {
-  number: number;
-  marked: boolean;
+export const generateUniqueRandomNumbers = () => {
+  var newNumbers: number[] = [];
+  while (newNumbers.length < 27) {
+    let index = newNumbers.length;
+    const randomNumber = randomNumberInRange(
+      (index % 9) * 10 + 1,
+      (index % 9) * 10 + 9
+    );
+    if (!newNumbers.includes(randomNumber)) {
+      newNumbers.push(randomNumber);
+    }
+  }
+  const tiles = newNumbers.map((num) => {
+    return { number: num, marked: false };
+  });
+  return tiles;
 };
 
-export type user = {
+export type NumberTile = {
+  number: number;
+  isMarked: boolean;
+};
+
+export type UserInfo = {
   username: string;
   micAllowed: boolean;
+  roomNumber : string,
+  isAdmin : boolean,
+  ticketCount : number
 };
+
+export type TicketDetails = {
+  ticketId : number,
+  indexSet1 : number [],
+  inedxSet2 : number [],
+  indexSet3 : number [],
+  isRow1Completed : boolean,
+  isRow2Completed : boolean,
+  isRow3Completed : boolean,
+  numberTiles : NumberTile []
+}
+
+export type User = {
+  info : UserInfo,
+  tickets : TicketDetails []
+};
+
+export type Status = {
+  isCompleted : boolean,
+  winnerName : string
+}
+
+export type Housie = {
+  participants : UserInfo [],
+  tickets : TicketDetails [],
+  firstRowStatus : Status,
+  secondRowStatus : Status,
+  thirdRowStatus : Status,
+  winStatus : Status,
+  currentTimerVal : number,
+  currentCounterValue : number,
+  currentRandomValue : number,
+  generatedRandomNumbers : number [],
+  numberStore : number []
+}
 
 function App() {
   const [randomNum, setRandomNum] = useState(0);
@@ -34,8 +90,6 @@ function App() {
   const [role, setRole] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [roomNo, setRoomNo] = useState<string>("");
-  const [totalTiles, setTotalTiles] = useState<tile[]>([]);
-  const [users, setUsers] = useState<user[]>([]);
   const [logged, setLogged] = useState(false);
   const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +108,17 @@ function App() {
   const [row1Winner,setRow1Winner] = useState("");
   const [row2Winner,setRow2Winner] = useState("");
   const [row3Winner,setRow3Winner] = useState("");
+
+  const [housie,setHousie] = useState<Housie  | null>(null)
+  const [currentUser,setCurrentUser] = useState<User | null>(null);
+
+  const handleHousie = () => {
+
+  }
+
+  const handleCurrentsser = () => {
+
+  }
 
   const emitJaldi5 = () => {
     setJaldi5Winner(username);
@@ -108,8 +173,6 @@ function App() {
     setCount(-1);
     setRole("");
     setRoomNo("");
-    setTotalTiles([]);
-    setUsers([]);
     setUsername("");
     setExitMessage("🎊🎉✨Yayy! Housee!!!!");
     setCounter(0);
@@ -446,25 +509,27 @@ function App() {
     const formData = new FormData(e.target as HTMLFormElement);
     const type = formData.get("type");
     const roomCode = formData.get("enterRoom");
-    var user = formData.get("username");
-    if (user)
-      user =
-        user.toString().charAt(0).toUpperCase() + user.toString().substring(1);
-    setRole(() => (type === "createRoom" ? "host" : "guest"));
+    var username = formData.get("username");
+    // if (user)
+    //   user = user.toString().charAt(0).toUpperCase() + user.toString().substring(1);
+    // setRole(() => (type === "createRoom" ? "host" : "guest"));
     setIsLoading(true);
     axios
       .post(`${URL}/api/room`, {
         type,
         roomCode,
-        user,
+        username,
       })
       .then((response) => {
         // console.log("Success:", response.data);
         if (response.data.success) {
           setLogged(true);
-          if (user) {
-            localStorage.setItem("username", user.toString());
-            setUsername(user.toString());
+          if (username) {
+            username = username.toString().charAt(0).toUpperCase() + username.toString().substring(1);
+            var updatedUser = {...currentUser,info : {...currentUser.info,username : username}}
+            localStorage.setItem("currentUser",JSON.stringify(updatedUser));
+            setCurrentUser(updatedUser)
+            // setUsername(user.toString());
           }
           localStorage.setItem("users", JSON.stringify(response.data.users));
           localStorage.setItem("roomNo", response.data.room);
@@ -535,23 +600,6 @@ function App() {
     return newNumbers;
   };
 
-  const generateUniqueRandomNumbers = () => {
-    var newNumbers: number[] = [];
-    while (newNumbers.length < 27) {
-      let index = newNumbers.length;
-      const randomNumber = randomNumberInRange(
-        (index % 9) * 10 + 1,
-        (index % 9) * 10 + 9
-      );
-      if (!newNumbers.includes(randomNumber)) {
-        newNumbers.push(randomNumber);
-      }
-    }
-    const tiles = newNumbers.map((num) => {
-      return { number: num, marked: false };
-    });
-    return tiles;
-  };
 
   return (
     <div className="grid grid-cols-12 grid-rows-12 w-screen h-screen bg-softColor gap-2 p-1 md:gap-3 md:p-3">
@@ -636,8 +684,10 @@ function App() {
             clicked={clicked}
             handleClick={handleClick}
             counter={counter}
+            housie={housie}
+            handleHousie={handleHousie}
           />
-          <Header logout={logout} />
+          <Header logout={logout} currentUser={currentUser} />
           <Board
             exitMessage={exitMessage}
             emitGameCompleteSignal={emitGameCompleteSignal}
@@ -654,12 +704,16 @@ function App() {
             row1Winner={row1Winner}
             row2Winner={row2Winner}
             row3Winner={row3Winner}
+            housie={housie}
+            handleHousie={handleHousie}
           />
           <Participants
             users={users}
             allowTalk={allowTalk}
             handleAllowTalk={handleAllowTalk}
             username={username}
+            housie={housie}
+            handleHousie={handleHousie}
           />
         </>
       )}
