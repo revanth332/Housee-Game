@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { randomNumberInRange } from "../App";
-import Tile from "./Tile";
+import Ticket from "./Ticket";
 import { ToastContainer, toast } from "react-toastify";
 import { Trophy } from 'lucide-react';
 
@@ -232,59 +232,7 @@ export default function Board({
         </div>
       </dialog>
       {/* <h1 style={{fontFamily:"cursive"}} className="text-5xl font-semibold text-slate-800">HOUSEE✌ <br /> <span className="text-sm block text-slate-600 mx-auto text-center mt-5">Lets play!</span> </h1> */}
-      <div className="flex flex-col">
-        <div className="grid grid-cols-9 w-full relative overflow-hidden">
-          <div
-            className={`absolute z-50 bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${
-              row1Status ? "translate-x-0" : "-translate-x-full"
-            }`}
-          ></div>
-          {totalTiles?.slice(0, 9).map((item, indx) => (
-            <Tile
-              genNums={genNums}
-              key={indx}
-              appear={indexSet1?.includes(indx)}
-              number={item.number}
-              marked={item.marked}
-              makeMark={makeMark}
-            />
-          ))}
-        </div>
-        <div className="grid grid-cols-9 w-full relative overflow-hidden">
-          <div
-            className={`absolute z-50 bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${
-              row2Status ? "translate-x-0" : "-translate-x-full"
-            }`}
-          ></div>
-          {totalTiles?.slice(9, 18).map((item, indx) => (
-            <Tile
-              genNums={genNums}
-              key={indx}
-              appear={indexSet2?.includes(indx)}
-              number={item.number}
-              marked={item.marked}
-              makeMark={makeMark}
-            />
-          ))}
-        </div>
-        <div className="grid grid-cols-9 w-full relative overflow-hidden">
-          <div
-            className={`absolute z-50 bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${
-              row3Status ? "translate-x-0" : "-translate-x-full"
-            }`}
-          ></div>
-          {totalTiles?.slice(18, 27).map((item, indx) => (
-            <Tile
-              genNums={genNums}
-              key={indx}
-              appear={indexSet3?.includes(indx)}
-              number={item.number}
-              marked={item.marked}
-              makeMark={makeMark}
-            />
-          ))}
-        </div>
-      </div>
+      <Ticket />
 
       <div className="border w-4/5 grid grid-rows-2 grid-cols-2 gap-5">
         <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">{jaldi5Winner !== "" ? <p className="text-center"><Trophy className="text-orange-500 inline mr-3"/> Jaldi 5 : {jaldi5Winner} </p> : <p className="text-center">Jaldi 5</p>  }</div>
