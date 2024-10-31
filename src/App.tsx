@@ -109,8 +109,29 @@ function App() {
   const [row2Winner,setRow2Winner] = useState("");
   const [row3Winner,setRow3Winner] = useState("");
 
-  const [housie,setHousie] = useState<Housie  | null>(null)
-  const [currentUser,setCurrentUser] = useState<User | null>(null);
+  const [housie,setHousie] = useState<Housie>({
+    participants : [],
+    tickets :  [],
+    firstRowStatus : {isCompleted : false,winnerName : ""},
+    secondRowStatus : {isCompleted : false,winnerName : ""},
+    thirdRowStatus : {isCompleted : false,winnerName : ""},
+    winStatus : {isCompleted : false,winnerName : ""},
+    currentTimerVal : 5,
+    currentCounterValue : -1,
+    currentRandomValue : 0,
+    generatedRandomNumbers : [],
+    numberStore :    []
+  })
+  const [currentUser,setCurrentUser] = useState<User>({
+      tickets : [],
+      info : {
+      username: "",
+      micAllowed: false,
+      roomNumber : "",
+      isAdmin : false,
+      ticketCount : 0
+      }
+  });
 
   const handleHousie = () => {
 
@@ -524,12 +545,13 @@ function App() {
         // console.log("Success:", response.data);
         if (response.data.success) {
           setLogged(true);
-          if (username) {
+          if (username && roomCode && type) {
             username = username.toString().charAt(0).toUpperCase() + username.toString().substring(1);
-            var updatedUser = {...currentUser,info : {...currentUser.info,username : username}}
+            const updatedUser = {...currentUser,info : {...currentUser.info,username,roomNumber : roomCode.toString(), isAdmin : type.toString() === "createRoom"}}
+            const newHousie = {...housie,participants:[...housie.participants,{username,roomNumber : roomCode.toString(), isAdmin : type.toString() === "createRoom"}]}
             localStorage.setItem("currentUser",JSON.stringify(updatedUser));
-            setCurrentUser(updatedUser)
-            // setUsername(user.toString());
+            setCurrentUser(updatedUser);
+            setHousie(newHousie)
           }
           localStorage.setItem("users", JSON.stringify(response.data.users));
           localStorage.setItem("roomNo", response.data.room);
