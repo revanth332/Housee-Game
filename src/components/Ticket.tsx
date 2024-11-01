@@ -1,162 +1,145 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Tile from "./Tile";
-import { generateUniqueRandomNumbers, randomNumberInRange } from "../App";
+import {
+  generateUniqueRandomNumbers,
+  Housie,
+  NumberTile,
+  randomNumberInRange,
+} from "../App";
 
-export type tile = {
-  number: number;
-  marked: boolean;
-};
-
-
-export default function Ticket() {
-    const [indexSet1, setIndexSet1] = useState<number[]>([]);
-    const [indexSet2, setIndexSet2] = useState<number[]>([]);
-    const [indexSet3, setIndexSet3] = useState<number[]>([]);
-    const [tileNumbers,setTileNumbers] = useState<tile []>([]);
-
-    useEffect(() => {
-      setIndexSet1(() => {
-        const indexes = generateIndexes();
-        localStorage.setItem("indexSet1", JSON.stringify(indexes));
-        return indexes;
-      });
-      setIndexSet2(() => {
-        const indexes = generateIndexes();
-        localStorage.setItem("indexSet2", JSON.stringify(indexes));
-        return indexes;
-      });
-      setIndexSet3(() => {
-        const indexes = generateIndexes();
-        localStorage.setItem("indexSet3", JSON.stringify(indexes));
-        return indexes;
-      });
-
-      setTileNumbers(() => {
-        const newTiles = generateUniqueRandomNumbers();
-        localStorage.setItem("totalTiles", JSON.stringify(newTiles));
-        return newTiles;
-      });
-
-    }, []);
-
-  
-    const makeMark = (num: number) => {
-      console.log(num);
-      if (num === randomNum || genNums?.includes(num)) {
-        setTotalTiles((prev: tile[]) => {
-          const newTiles = prev.map((item) =>
-            item.number === num ? { ...item, marked: true } : item
-          );
-          const markedCount = newTiles.reduce(
-            (count, tile) => (tile.marked ? count + 1 : count),
-            0
-          );
-          const Row1Count = newTiles
-            .slice(0, 9)
-            .reduce((count, tile) => (tile.marked ? count + 1 : count), 0);
-          const Row2Count = newTiles
-            .slice(9, 18)
-            .reduce((count, tile) => (tile.marked ? count + 1 : count), 0);
-          const Row3Count = newTiles
-            .slice(18, 27)
-            .reduce((count, tile) => (tile.marked ? count + 1 : count), 0);
-  
-          setJaldi5(() => {
-            const bool = markedCount === 5;
-            localStorage.setItem("jaldi5", bool + "");
-            return bool;
-          });
-          setRow1Status(() => {
-            const bool = Row1Count === 5;
-            localStorage.setItem("row1Status", bool + "");
-            return bool;
-          });
-          setRow2Status(() => {
-            const bool = Row2Count === 5;
-            localStorage.setItem("row2Status", bool + "");
-            return bool;
-          });
-          setRow3Status(() => {
-            const bool = Row3Count === 5;
-            localStorage.setItem("row3Status", bool + "");
-            return bool;
-          });
-          setHousee(() => {
-            const bool = Row1Count === 5 && Row2Count === 5 && Row3Count === 5;
-            localStorage.setItem("housee", bool + "");
-            return bool;
-          });
-          localStorage.setItem("totalTiles", JSON.stringify(newTiles));
-          return newTiles;
-        });
-      }
+export default function Ticket({
+  id,
+  emitGameCompleteSignal,
+  emitJaldi5,
+  emitRow1Complete,
+  emitRow2Complete,
+  emitRow3Complete,
+  housie,
+  handleHousie,
+}: {
+  id: number;
+  emitGameCompleteSignal: () => void;
+  emitJaldi5: () => void;
+  emitRow1Complete: () => void;
+  emitRow2Complete: () => void;
+  emitRow3Complete: () => void;
+  housie: Housie;
+  handleHousie: (newHousie: Housie) => void;
+}) {
+  useEffect(() => {
+    const skippingIndexesRow1: number[] = generateIndexes();
+    const skippingIndexesRow2: number[] = generateIndexes();
+    const skippingIndexesRow3: number[] = generateIndexes();
+    const newTiles: NumberTile[] = generateUniqueRandomNumbers();
+    const newHousie: Housie = {
+      ...housie,
+      tickets: [
+        ...housie.tickets,
+        {
+          ticketId: id,
+          skippingIndexesRow1,
+          skippingIndexesRow2,
+          skippingIndexesRow3,
+          isRow1Completed: false,
+          isRow2Completed: false,
+          isRow3Completed: false,
+          numberTiles: newTiles,
+        },
+      ],
     };
+    handleHousie(newHousie);
+    localStorage.setItem("housie", JSON.stringify(newHousie));
+  }, []);
 
-    const generateIndexes = () => {
-        const newNumbers: number[] = [];
-        while (newNumbers.length < 5) {
-          const randomNumber = randomNumberInRange(0, 8);
-          if (!newNumbers.includes(randomNumber)) {
-            newNumbers.push(randomNumber);
-          }
-        }
-        return newNumbers;
-      };
+  const makeMark = (num: number) => {
+    console.log(num);
+    if (
+      num === housie.currentRandomValue ||
+      housie.generatedRandomNumbers?.includes(num)
+    ) {
+      const newTiles = housie.tickets[id].numberTiles.map((item) =>
+        item.number === num ? { ...item, isMarked: true } : item
+      );
 
-    
+      const totalMarkedCount = newTiles.reduce(
+        (count, tile) => (tile.isMarked ? count + 1 : count),
+        0
+      );
+
+      const row1MarkedCount = newTiles
+        .slice(0, 9)
+        .reduce((count, tile) => (tile.isMarked ? count + 1 : count), 0);
+
+      const row2MarkedCount = newTiles
+        .slice(9, 18)
+        .reduce((count, tile) => (tile.isMarked ? count + 1 : count), 0);
+      const row3MarkedCount = newTiles
+        .slice(18, 27)
+        .reduce((count, tile) => (tile.isMarked ? count + 1 : count), 0);
+
+      if (totalMarkedCount === 5) {
+        emitJaldi5();
+      }
+
+      if (row1MarkedCount === 5) {
+        emitRow1Complete();
+      }
+
+      if (row2MarkedCount === 5) {
+        emitRow2Complete();
+      }
+
+      if (row3MarkedCount === 5) {
+        emitRow3Complete();
+      }
+
+      if (
+        row1MarkedCount === 5 &&
+        row2MarkedCount === 5 &&
+        row3MarkedCount === 5
+      ) {
+        emitGameCompleteSignal();
+      }
+    }
+  };
+
+  const generateIndexes = () => {
+    const newNumbers: number[] = [];
+    while (newNumbers.length < 5) {
+      const randomNumber = randomNumberInRange(0, 8);
+      if (!newNumbers.includes(randomNumber)) {
+        newNumbers.push(randomNumber);
+      }
+    }
+    return newNumbers;
+  };
+
   return (
-    <div className="flex flex-col">
-        <div className="grid grid-cols-9 w-full relative overflow-hidden">
+    <div className="flex flex-col shadow-softShadow p-3 rounded-xl">
+      {
+        [...new Array(3)].map((_,indx) => (
+          <div key={indx} className="grid grid-cols-9 w-full relative overflow-hidden">
           <div
             className={`absolute z-50 bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${
-              row1Status ? "translate-x-0" : "-translate-x-full"
+              housie.tickets[id]?.isRow1Completed
+                ? "translate-x-0"
+                : "-translate-x-full"
             }`}
           ></div>
-          {totalTiles?.slice(0, 9).map((item, indx) => (
+          {housie.tickets[id]?.numberTiles.slice((indx*9) + 0, (indx*9)+9).map((item, indx) => (
             <Tile
-              genNums={genNums}
               key={indx}
-              appear={indexSet1?.includes(indx)}
-              number={item.number}
-              marked={item.marked}
+              index={indx}
+              numberTile={item}
               makeMark={makeMark}
+              ticketDetails={housie.tickets[id]}
+              genNumbers={housie.generatedRandomNumbers}
             />
           ))}
         </div>
-        <div className="grid grid-cols-9 w-full relative overflow-hidden">
-          <div
-            className={`absolute z-50 bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${
-              row2Status ? "translate-x-0" : "-translate-x-full"
-            }`}
-          ></div>
-          {totalTiles?.slice(9, 18).map((item, indx) => (
-            <Tile
-              genNums={genNums}
-              key={indx}
-              appear={indexSet2?.includes(indx)}
-              number={item.number}
-              marked={item.marked}
-              makeMark={makeMark}
-            />
-          ))}
-        </div>
-        <div className="grid grid-cols-9 w-full relative overflow-hidden">
-          <div
-            className={`absolute z-50 bg-slate-600 w-full h-1 top-1/2 transition ease-in-out ${
-              row3Status ? "translate-x-0" : "-translate-x-full"
-            }`}
-          ></div>
-          {totalTiles?.slice(18, 27).map((item, indx) => (
-            <Tile
-              genNums={genNums}
-              key={indx}
-              appear={indexSet3?.includes(indx)}
-              number={item.number}
-              marked={item.marked}
-              makeMark={makeMark}
-            />
-          ))}
-        </div>
-      </div>
-  )
+        ))
+      }
+
+    </div>
+  );
 }

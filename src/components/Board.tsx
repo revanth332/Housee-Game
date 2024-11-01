@@ -1,108 +1,79 @@
-import { useEffect, useRef, useState } from "react";
-import { randomNumberInRange } from "../App";
+import { useRef } from "react";
 import Ticket from "./Ticket";
-import { ToastContainer, toast } from "react-toastify";
-import { Trophy } from 'lucide-react';
-
-type tile = {
-  number: number;
-  marked: boolean;
-};
+import { ToastContainer } from "react-toastify";
+import { Trophy } from "lucide-react";
+import { Housie, User } from "../App";
 
 export default function Board({
   exitMessage,
   emitGameCompleteSignal,
   logout,
-  randomNum,
-  genNums,
-  totalTiles,
-  setTotalTiles,
   emitJaldi5,
   emitRow1Complete,
   emitRow2Complete,
   emitRow3Complete,
-  jaldi5Winner,
-  row1Winner,
-  row2Winner,
-  row3Winner,
   housie,
-  handleHousie
+  currentUser,
+  handleHousie,
 }: {
   exitMessage: string;
   emitGameCompleteSignal: () => void;
   logout: () => void;
-  randomNum: number;
-  genNums: number[];
-  totalTiles: tile[];
-  setTotalTiles: React.Dispatch<React.SetStateAction<tile[]>>;
-  emitJaldi5 : () => void;
-  emitRow1Complete : () => void;
-  emitRow2Complete : () => void;
-  emitRow3Complete : () => void;
-  jaldi5Winner : string,
-  row1Winner : string,
-  row2Winner : string,
-  row3Winner : string,
-  housie : Housie,
-  handleHousie : () => void
+  emitJaldi5: () => void;
+  emitRow1Complete: () => void;
+  emitRow2Complete: () => void;
+  emitRow3Complete: () => void;
+  housie: Housie;
+  currentUser: User;
+  handleHousie: (newHousie: Housie) => void;
 }) {
-  // const [numbers,setNumbers] = useState<tile[]>([])
-  const [row1Status, setRow1Status] = useState(false);
-  const [row2Status, setRow2Status] = useState(false);
-  const [row3Status, setRow3Status] = useState(false);
-  const [jaldi5, setJaldi5] = useState(false);
-  const [housee, setHousee] = useState(false);
-
   const dialogRef = useRef<HTMLDialogElement | null>(null);
 
+  // useEffect(() => {
+  //   if (jaldi5){
+  //     if(localStorage.getItem("jaldi5Finished") === null) emitJaldi5();
+  //     toast("Jaldi 5 !!!");
+  //   }
+  // }, [jaldi5]);
 
-  useEffect(() => {
-    if (jaldi5){
-      if(localStorage.getItem("jaldi5Finished") === null) emitJaldi5();
-      toast("Jaldi 5 !!!");
-    }
-  }, [jaldi5]);
+  // useEffect(() => {
+  //   // console.log("row1",row1Status)
+  //   if (row1Status){
+  //     if(localStorage.getItem("row1Finished")  === null) emitRow1Complete();
+  //     toast("First Row completed!!!");
+  //   }
+  // }, [row1Status]);
 
-  useEffect(() => {
-    // console.log("row1",row1Status)
-    if (row1Status){
-      if(localStorage.getItem("row1Finished")  === null) emitRow1Complete();
-      toast("First Row completed!!!");
-    }
-  }, [row1Status]);
+  // useEffect(() => {
+  //   // console.log("row2",row2Status)
+  //   if (row2Status){
+  //     if(localStorage.getItem("row2Finished") === null) emitRow2Complete();
+  //     toast("Second Row completed !!!");
+  //   }
+  // }, [row2Status]);
 
-  useEffect(() => {
-    // console.log("row2",row2Status)
-    if (row2Status){
-      if(localStorage.getItem("row2Finished") === null) emitRow2Complete();
-      toast("Second Row completed !!!");
-    }
-  }, [row2Status]);
+  // useEffect(() => {
+  //   // console.log("row3",row3Status)
+  //   if (row3Status){
+  //     if(localStorage.getItem("row3Finished") === null) emitRow3Complete()
+  //     toast("Third Row completed !!!");
+  //   }
+  // }, [row3Status]);
 
-  useEffect(() => {
-    // console.log("row3",row3Status)
-    if (row3Status){
-      if(localStorage.getItem("row3Finished") === null) emitRow3Complete()
-      toast("Third Row completed !!!");
-    }
-  }, [row3Status]);
+  // useEffect(() => {
+  //   // console.log("row1",row1Status)
+  //   if (housee) {
+  //     dialogRef.current?.showModal();
+  //     emitGameCompleteSignal();
+  //   }
+  // }, [housee]);
 
-  useEffect(() => {
-    // console.log("row1",row1Status)
-    if (housee) {
-      dialogRef.current?.showModal();
-      emitGameCompleteSignal();
-    }
-  }, [housee]);
-
-  useEffect(() => {
-    // For remaining users
-    if (exitMessage.includes("has")) {
-      dialogRef.current?.showModal();
-    }
-  },[exitMessage]) 
-
-
+  // useEffect(() => {
+  //   // For remaining users
+  //   if (exitMessage.includes("has")) {
+  //     dialogRef.current?.showModal();
+  //   }
+  // },[exitMessage])
 
   const closeDialog = () => {
     dialogRef.current?.close();
@@ -131,13 +102,63 @@ export default function Board({
         </div>
       </dialog>
 
-      <Ticket />
+      <div className="overflow-scroll w-full grid grid-cols-2 h-full gap-5 p-5 no-scrollbar">
+        {[...new Array(currentUser.info.ticketCount)].map((_, index) => (
+          <Ticket
+            key={index}
+            id={index}
+            emitGameCompleteSignal={emitGameCompleteSignal}
+            emitJaldi5={emitJaldi5}
+            emitRow1Complete={emitRow1Complete}
+            emitRow2Complete={emitRow2Complete}
+            emitRow3Complete={emitRow3Complete}
+            housie={housie}
+            handleHousie={handleHousie}
+          />
+        ))}
+      </div>
 
-      <div className="border w-4/5 grid grid-rows-2 grid-cols-2 gap-5">
-        <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">{jaldi5Winner !== "" ? <p className="text-center"><Trophy className="text-orange-500 inline mr-3"/> Jaldi 5 : {jaldi5Winner} </p> : <p className="text-center">Jaldi 5</p>  }</div>
-        <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">{row1Winner !== "" ? <p className="text-center"><Trophy className="text-orange-500 inline mr-3"/> First Row : {row1Winner} </p> : <p className="text-center">First Row</p> }</div>
-        <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">{row2Winner !== "" ? <p className="text-center"><Trophy className="text-orange-500 inline mr-3"/> Second Row : {row2Winner} </p> : <p className="text-center">Second Row</p> }</div>
-        <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">{row3Winner !== "" ? <p className="text-center"><Trophy className="text-orange-500 inline mr-3"/> Third Row : {row3Winner} </p> : <p className="text-center">Third Row</p> }</div>
+      <div className="border w-4/5 grid grid-rows-2 grid-cols-2 gap-5 py-3">
+        <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">
+          {housie.jaldi5Status.isCompleted ? (
+            <p className="text-center">
+              <Trophy className="text-orange-500 inline mr-3" /> Jaldi 5 :{" "}
+              {housie.jaldi5Status.winnerName}{" "}
+            </p>
+          ) : (
+            <p className="text-center">Jaldi 5</p>
+          )}
+        </div>
+        <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">
+          {housie.firstRowStatus.isCompleted ? (
+            <p className="text-center">
+              <Trophy className="text-orange-500 inline mr-3" /> First Row :{" "}
+              {housie.firstRowStatus.winnerName}{" "}
+            </p>
+          ) : (
+            <p className="text-center">First Row</p>
+          )}
+        </div>
+        <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">
+          {housie.secondRowStatus.isCompleted ? (
+            <p className="text-center">
+              <Trophy className="text-orange-500 inline mr-3" /> Second Row :{" "}
+              {housie.secondRowStatus.winnerName}{" "}
+            </p>
+          ) : (
+            <p className="text-center">Second Row</p>
+          )}
+        </div>
+        <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">
+          {housie.thirdRowStatus.isCompleted ? (
+            <p className="text-center">
+              <Trophy className="text-orange-500 inline mr-3" /> Third Row :{" "}
+              {housie.thirdRowStatus.winnerName}{" "}
+            </p>
+          ) : (
+            <p className="text-center">Third Row</p>
+          )}
+        </div>
       </div>
     </div>
   );
