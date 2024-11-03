@@ -1,23 +1,23 @@
 import { FiCheck } from "react-icons/fi";
-import { NumberTile, TicketDetails } from "../App";
+import { NumberTile } from "../App";
 const commonStyle =
-  "h-9 w-9 md:w-9 md:h-9 m-2 rounded-full hover:shadow-softShdowInner bg-softColor shadow-softShadow";
+  "h-9 w-9 md:m-2 my-1 rounded-full hover:shadow-softShdowInner bg-softColor shadow-softShadow";
 export default function Tile({
   index,
   numberTile,
   makeMark,
-  ticketDetails,
+  skippingIndexes,
   genNumbers,
 }: {
   index: number;
   numberTile: NumberTile;
   makeMark: (num: number) => void;
-  ticketDetails: TicketDetails;
+  skippingIndexes: number[];
   genNumbers: number[];
 }) {
-  return ticketDetails.skippingIndexesRow1.includes(index) ? (
+  return skippingIndexes.includes(index) ? (
     <div
-      className={`${commonStyle}  flex items-center justify-around bg-gray-200 cursor-pointer`}
+      className={`${commonStyle} flex items-center justify-around bg-gray-200 cursor-pointer`}
       onClick={() => makeMark(numberTile.number)}
     >
       {numberTile.isMarked && (

@@ -14,7 +14,7 @@ export default function Board({
   emitRow3Complete,
   housie,
   currentUser,
-  handleHousie,
+  handleCurrentUser,
 }: {
   exitMessage: string;
   emitGameCompleteSignal: () => void;
@@ -25,55 +25,9 @@ export default function Board({
   emitRow3Complete: () => void;
   housie: Housie;
   currentUser: User;
-  handleHousie: (newHousie: Housie) => void;
+  handleCurrentUser: (user: User) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
-
-  // useEffect(() => {
-  //   if (jaldi5){
-  //     if(localStorage.getItem("jaldi5Finished") === null) emitJaldi5();
-  //     toast("Jaldi 5 !!!");
-  //   }
-  // }, [jaldi5]);
-
-  // useEffect(() => {
-  //   // console.log("row1",row1Status)
-  //   if (row1Status){
-  //     if(localStorage.getItem("row1Finished")  === null) emitRow1Complete();
-  //     toast("First Row completed!!!");
-  //   }
-  // }, [row1Status]);
-
-  // useEffect(() => {
-  //   // console.log("row2",row2Status)
-  //   if (row2Status){
-  //     if(localStorage.getItem("row2Finished") === null) emitRow2Complete();
-  //     toast("Second Row completed !!!");
-  //   }
-  // }, [row2Status]);
-
-  // useEffect(() => {
-  //   // console.log("row3",row3Status)
-  //   if (row3Status){
-  //     if(localStorage.getItem("row3Finished") === null) emitRow3Complete()
-  //     toast("Third Row completed !!!");
-  //   }
-  // }, [row3Status]);
-
-  // useEffect(() => {
-  //   // console.log("row1",row1Status)
-  //   if (housee) {
-  //     dialogRef.current?.showModal();
-  //     emitGameCompleteSignal();
-  //   }
-  // }, [housee]);
-
-  // useEffect(() => {
-  //   // For remaining users
-  //   if (exitMessage.includes("has")) {
-  //     dialogRef.current?.showModal();
-  //   }
-  // },[exitMessage])
 
   const closeDialog = () => {
     dialogRef.current?.close();
@@ -81,7 +35,7 @@ export default function Board({
   };
 
   return (
-    <div className="flex flex-col justify-around col-span-full row-start-7 row-end-13 md:col-span-9 md:row-span-11 items-center bg-softColor shadow-softShadow md:rounded-2xl rounded-lg">
+    <div className="flex flex-col justify-around col-span-full row-start-7 row-end-13 md:col-span-9 md:row-span-11 items-center bg-softColor md:shadow-softShadow md:rounded-2xl rounded-lg">
       <ToastContainer />
       <dialog
         ref={dialogRef}
@@ -101,8 +55,9 @@ export default function Board({
           </div>
         </div>
       </dialog>
-
-      <div className="overflow-scroll w-full grid grid-cols-2 h-full gap-5 p-5 no-scrollbar">
+      {
+        currentUser.info.ticketCount > 0 ? <>
+        <div className="overflow-scroll w-full grid lg:grid-cols-2 h-full gap-5 md:p-5 p-1 no-scrollbar">
         {[...new Array(currentUser.info.ticketCount)].map((_, index) => (
           <Ticket
             key={index}
@@ -113,14 +68,15 @@ export default function Board({
             emitRow2Complete={emitRow2Complete}
             emitRow3Complete={emitRow3Complete}
             housie={housie}
-            handleHousie={handleHousie}
+            currentUser={currentUser}
+            handleCurrentUser={handleCurrentUser}
           />
         ))}
       </div>
 
       <div className="border w-4/5 grid grid-rows-2 grid-cols-2 gap-5 py-3">
         <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">
-          {housie.jaldi5Status.isCompleted ? (
+          {housie.jaldi5Status?.isCompleted ? (
             <p className="text-center">
               <Trophy className="text-orange-500 inline mr-3" /> Jaldi 5 :{" "}
               {housie.jaldi5Status.winnerName}{" "}
@@ -130,7 +86,7 @@ export default function Board({
           )}
         </div>
         <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">
-          {housie.firstRowStatus.isCompleted ? (
+          {housie.firstRowStatus?.isCompleted ? (
             <p className="text-center">
               <Trophy className="text-orange-500 inline mr-3" /> First Row :{" "}
               {housie.firstRowStatus.winnerName}{" "}
@@ -140,7 +96,7 @@ export default function Board({
           )}
         </div>
         <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">
-          {housie.secondRowStatus.isCompleted ? (
+          {housie.secondRowStatus?.isCompleted ? (
             <p className="text-center">
               <Trophy className="text-orange-500 inline mr-3" /> Second Row :{" "}
               {housie.secondRowStatus.winnerName}{" "}
@@ -150,7 +106,7 @@ export default function Board({
           )}
         </div>
         <div className="row-span-1 col-span-1 shadow-softShadow p-2 rounded-xl">
-          {housie.thirdRowStatus.isCompleted ? (
+          {housie.thirdRowStatus?.isCompleted ? (
             <p className="text-center">
               <Trophy className="text-orange-500 inline mr-3" /> Third Row :{" "}
               {housie.thirdRowStatus.winnerName}{" "}
@@ -160,6 +116,10 @@ export default function Board({
           )}
         </div>
       </div>
+        </> :
+        <h1 className="h-full flex items-center text-3xl text-gray-500 font-bold">No Tickets Assigned</h1>
+      }
+
     </div>
   );
 }

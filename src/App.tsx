@@ -8,7 +8,7 @@ import axios from "axios";
 import Participants from "./components/Participants";
 import Header from "./components/Header";
 import { Loader2 } from "lucide-react";
-import DetailsModal from "./components/DetailsModal";
+import WinModal from "./components/WinModal";
 
 const URL = import.meta.env.VITE_SOCKET_URL;
 
@@ -16,7 +16,7 @@ export const randomNumberInRange = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-export const generateUniqueRandomNumbers  = () => {
+export const generateUniqueRandomNumbers = () => {
   var newNumbers: number[] = [];
   while (newNumbers.length < 27) {
     let index = newNumbers.length;
@@ -28,7 +28,7 @@ export const generateUniqueRandomNumbers  = () => {
       newNumbers.push(randomNumber);
     }
   }
-  const tiles : NumberTile[] = newNumbers.map((num) => {
+  const tiles: NumberTile[] = newNumbers.map((num) => {
     return { number: num, isMarked: false };
   });
   return tiles;
@@ -45,14 +45,12 @@ export type UserInfo = {
   roomNumber: string;
   isAdmin: boolean;
   ticketCount: number;
-  isEditing : boolean;
+  isEditing: boolean;
 };
 
 export type TicketDetails = {
   ticketId: number;
-  skippingIndexesRow1: number[];
-  skippingIndexesRow2: number[];
-  skippingIndexesRow3: number[];
+  skippingIndexes: number[][];
   isRow1Completed: boolean;
   isRow2Completed: boolean;
   isRow3Completed: boolean;
@@ -70,11 +68,10 @@ export type Status = {
 };
 
 export type Housie = {
-  roomNumber : string,
-  currentStoreIndex:number,
+  roomNumber: string;
+  currentStoreIndex: number;
   participants: UserInfo[];
-  tickets: TicketDetails[];
-  jaldi5Status : Status,
+  jaldi5Status: Status;
   firstRowStatus: Status;
   secondRowStatus: Status;
   thirdRowStatus: Status;
@@ -96,14 +93,14 @@ function App() {
   const [exitMessage, setExitMessage] = useState<string>(
     "🎊🎉✨Yayy! Housee!!!!"
   );
+  const [winModal,setWinModal] = useState(false);
   const [intervalId, setIntervalId] = useState<number>(0);
   const [counterInterval, setCounterInterval] = useState<number>(0);
 
   const initialHosie = {
-    roomNumber:"",
+    roomNumber: "",
     participants: [],
-    tickets: [],
-    jaldi5Status : { isCompleted: false, winnerName: "" },
+    jaldi5Status: { isCompleted: false, winnerName: "" },
     firstRowStatus: { isCompleted: false, winnerName: "" },
     secondRowStatus: { isCompleted: false, winnerName: "" },
     thirdRowStatus: { isCompleted: false, winnerName: "" },
@@ -115,51 +112,106 @@ function App() {
     numberStore: [],
   };
 
-  const intialUser ={
-      tickets: [],
-      info: {
-        username: "",
-        micAllowed: false,
-        roomNumber: "",
-        isAdmin: false,
-        ticketCount: 1,
-        isEditing : false
-      },
-      
-    }
+  const intialUser = {
+    tickets: [],
+    info: {
+      username: "",
+      micAllowed: false,
+      roomNumber: "",
+      isAdmin: false,
+      ticketCount: 0,
+      isEditing: false,
+    },
+  };
   const [housie, setHousie] = useState<Housie>(initialHosie);
   const [currentUser, setCurrentUser] = useState<User>(intialUser);
 
-  const handleHousie = (newHousie : Housie) => {
-    setHousie(newHousie);
+  const handleHousie = (newHousie: Housie) => {
+    console.log("update called : ", newHousie);
+    setHousie((prev) => ({ ...prev, ...newHousie }));
   };
 
-  const handleCurrentUser = (updatedUser : User) => {
-    setCurrentUser(updatedUser)
+  const handleCurrentUser = (updatedUser: User) => {
+    setCurrentUser((prev) => ({ ...prev, ...updatedUser }));
   };
 
   const emitJaldi5 = () => {
-    const newHousie = {...housie,jaldi5Status:{ isCompleted: true, winnerName: currentUser.info.username }}
-    localStorage.setItem("housie", JSON.stringify(newHousie));
-    socket.emit("jaldi5Complete", currentUser);
+    const newHousie = {
+      ...housie,
+      jaldi5Status: {
+        isCompleted: true,
+        winnerName: currentUser.info.username,
+      },
+    };
+    if (!housie.jaldi5Status.isCompleted) {
+      toast("Juldi5 Completed");
+      localStorage.setItem("housie", JSON.stringify(newHousie));
+      socket.emit("jaldi5Complete", newHousie, currentUser);
+      handleHousie(newHousie);
+    }
   };
 
   const emitRow1Complete = () => {
-    const newHousie = {...housie,firstRowStatus:{ isCompleted: true, winnerName: currentUser.info.username }}
-    localStorage.setItem("housie", JSON.stringify(newHousie));
-    socket.emit("row1Complete", currentUser);
+    const newHousie = {
+      ...housie,
+      firstRowStatus: {
+        isCompleted: true,
+        winnerName: currentUser.info.username,
+      },
+    };
+    if (!housie.firstRowStatus.isCompleted) {
+      toast("First Row completed");
+      localStorage.setItem("housie", JSON.stringify(newHousie));
+      socket.emit("row1Complete", newHousie, currentUser);
+      handleHousie(newHousie);
+    }
   };
 
   const emitRow2Complete = () => {
-    const newHousie = {...housie,secondRowStatus:{ isCompleted: true, winnerName: currentUser.info.username }}
-    localStorage.setItem("housie", JSON.stringify(newHousie));
-    socket.emit("row2Complete", currentUser);
+    const newHousie = {
+      ...housie,
+      secondRowStatus: {
+        isCompleted: true,
+        winnerName: currentUser.info.username,
+      },
+    };
+    if (!housie.secondRowStatus.isCompleted) {
+      toast("Second Row completed");
+      localStorage.setItem("housie", JSON.stringify(newHousie));
+      socket.emit("row2Complete", newHousie, currentUser);
+      handleHousie(newHousie);
+    }
   };
 
   const emitRow3Complete = () => {
-    const newHousie = {...housie,firstRowStatus:{ isCompleted: true, winnerName: currentUser.info.username }}
-    localStorage.setItem("housie", JSON.stringify(newHousie));
-    socket.emit("row3Complete", currentUser);
+    const newHousie = {
+      ...housie,
+      thirdRowStatus: {
+        isCompleted: true,
+        winnerName: currentUser.info.username,
+      },
+    };
+    if (!housie.thirdRowStatus.isCompleted) {
+      toast("Third Row completed");
+      localStorage.setItem("housie", JSON.stringify(newHousie));
+      socket.emit("row3Complete", newHousie, currentUser);
+      handleHousie(newHousie);
+    }
+  };
+
+  const emitTicketUpdate = (
+    newTicketCount: number,
+    selectedUser: string,
+    newHousie: Housie,
+    generatedTickets: TicketDetails[]
+  ) => {
+    socket.emit(
+      "ticketUpdate",
+      newTicketCount,
+      selectedUser,
+      newHousie,
+      generatedTickets
+    );
   };
 
   const handleClick = () => {
@@ -181,80 +233,117 @@ function App() {
   };
 
   const emitGameCompleteSignal = () => {
+    handleWinModal();
     socket.emit("win", currentUser);
   };
 
   const resetGame = () => {
     localStorage.clear();
+    setLogged(false);
     dialogRef.current?.showModal();
     if (formRef.current) {
       formRef.current.reset();
     }
-    handleHousie(initialHosie)
+    handleHousie(initialHosie);
     handleCurrentUser(intialUser);
   };
 
   const logout = () => {
+    clearInterval(counterInterval);
+    clearInterval(intervalId);
     resetGame();
-    const newParticipants = housie.participants.filter(participant => participant.username !== currentUser.info.username)
-    const newHousie = {...housie,participants:newParticipants};
-    socket.emit("exit", newHousie,currentUser);
+    const newParticipants = housie.participants.filter(
+      (participant) => participant.username !== currentUser.info.username
+    );
+    console.log(newParticipants);
+    const newHousie = { ...housie, participants: newParticipants };
+    socket.emit("exit", newHousie, currentUser);
   };
 
-  const editUser = (user : UserInfo) => {
-    const newHousie = {...housie,participants:housie.participants.map(participant => participant.username === user.username ? {...participant,isEditing : !participant.isEditing} : participant)};
-    handleHousie(newHousie);
+  const handleWinModal = () => {
+    setWinModal(prev => !prev);
   }
 
   const handleAllowTalk = () => {
-      const isAllowed = !currentUser.info.micAllowed;
+    setCurrentUser((prevUser) => {
+      const isAllowed = !prevUser.info.micAllowed;
       if (isAllowed) {
         startRecording();
       } else {
         stopRecording();
       }
-      const newCurrentUser = {...currentUser,info:{...currentUser.info,micAllowed : isAllowed}};
-      const newParticipants = housie.participants.map(participant => participant.username === currentUser.info.username ? {...participant,micAllowed:isAllowed} : participant)
-      const newHousie = {...housie,participants:newParticipants};
+      const newCurrentUser = {
+        ...prevUser,
+        info: { ...prevUser.info, micAllowed: isAllowed },
+      };
+      return newCurrentUser;
+    })
+
+    setHousie((prevHousie) => {
+      const newParticipants = prevHousie.participants.map((participant) =>
+        participant.username === currentUser.info.username
+          ? { ...participant, micAllowed: !participant.micAllowed }
+          : participant
+      );
+      const newHousie = { ...prevHousie, participants: newParticipants };
       localStorage.setItem("housie", JSON.stringify(newHousie));
-      socket.emit("housie", newHousie,newCurrentUser);
-      setHousie(newHousie);
+      socket.emit("micAllow", newHousie);
+      return newHousie;
+    })
+   
   };
 
   const setRandomNumber = () => {
     handleClick();
 
     if (!counterInterval) {
-      const newIntervalId = setInterval(() => {
-          let newCurrentTimerValue = housie.currentTimerValue - 1;
+      const newCounterIntervalId = setInterval(() => {
+        setHousie((prevHousie) => {
+          let newCurrentTimerValue = prevHousie.currentTimerValue - 1;
+          // console.log("interval : 1000",newCurrentTimerValue)
           if (newCurrentTimerValue === 0) {
             newCurrentTimerValue = 5;
           }
-          const newHousie = {...housie,currentTimerValue:newCurrentTimerValue};
+          const newHousie = {
+            ...prevHousie,
+            currentTimerValue: newCurrentTimerValue,
+          };
           localStorage.setItem("housie", JSON.stringify(newHousie));
-          socket.emit("housie",newHousie,currentUser);
-          handleHousie(newHousie);
+          socket.emit("housie", newHousie, currentUser);
+          return newHousie;
+        });
       }, 1000);
-      setCounterInterval(newIntervalId);
+      setCounterInterval(newCounterIntervalId);
     }
 
     if (!intervalId) {
-      console.log("inside inter");
+      // console.log("interval 5000");
 
       const newIntervalId = setInterval(() => {
-          const newCurrentStoreIndex = housie.currentStoreIndex + 1;
-          const newCurrentRandomValue = housie.numberStore[newCurrentStoreIndex]
-          const newGeneratedRandomNumbers = [...housie.generatedRandomNumbers,newCurrentRandomValue]
-          const newHousie = {...housie,currentStoreIndex:newCurrentStoreIndex,currentRandomValue:newCurrentRandomValue,generatedRandomNumbers:newGeneratedRandomNumbers};
-          
-          localStorage.setItem("housie", JSON.stringify(newHousie));
-          socket.emit("housie",newHousie,currentUser);
-          handleHousie(newHousie);
+        setHousie((prevHousie) => {
+          const newCurrentStoreIndex = prevHousie.currentStoreIndex + 1;
+          // console.log("newCurrentStoreIndex : "+newCurrentStoreIndex)
+          const newCurrentRandomValue =
+            prevHousie.numberStore[newCurrentStoreIndex];
+          const newGeneratedRandomNumbers = [
+            ...prevHousie.generatedRandomNumbers,
+            newCurrentRandomValue,
+          ];
+          const newHousie = {
+            ...prevHousie,
+            currentStoreIndex: newCurrentStoreIndex,
+            currentRandomValue: newCurrentRandomValue,
+            generatedRandomNumbers: newGeneratedRandomNumbers,
+          };
 
-          if (newCurrentStoreIndex === housie.numberStore.length - 1) {
+          localStorage.setItem("housie", JSON.stringify(newHousie));
+          socket.emit("housie", newHousie, currentUser);
+          if (newCurrentStoreIndex === newHousie.numberStore.length - 1) {
             clearInterval(intervalId);
           }
 
+          return newHousie;
+        });
       }, 5000);
       setIntervalId(newIntervalId);
     }
@@ -271,67 +360,225 @@ function App() {
     };
   }, [intervalId]);
 
+  const housieRef = useRef(housie); // Create a ref for housie
+  const currentUserRef = useRef(currentUser); // Create a ref for currentUser
+
+  // Update the refs whenever housie or currentUser changes
+  useEffect(() => {
+    housieRef.current = housie;
+  }, [housie]);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   useEffect(() => {
     socket.connect();
 
-    socket.on("entered", (incomingHousie : Housie) => {
-      if (incomingHousie.roomNumber === currentUser.info.roomNumber) {
-        handleHousie(incomingHousie);
-      }
+    socket.on("entered", (incomingHousie: Housie, incomingUser: User) => {
+      // console.log(incomingHousie.roomNumber,currentUserRef.current.info.roomNumber)
+      setHousie((prevHousie) => {
+        if (
+          incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
+        ) {
+          const updatedHousie = {
+            ...prevHousie,
+            ...incomingHousie,
+          };
+          // console.log("Updated Housie:", updatedHousie);
+
+          toast.info(incomingUser.info.username + " has joined the game");
+          localStorage.setItem("housie", JSON.stringify(updatedHousie));
+
+          return updatedHousie; // Return the new updated state
+        }
+
+        return prevHousie; // Return the previous state if room numbers don't match
+      });
     });
 
-    socket.on("jaldi5Complete", (incomingUser : User) => {
-      if (incomingUser.info.roomNumber === housie.roomNumber) {
-        const newHousie = {...housie,secondRowStatus:{ isCompleted: true, winnerName: incomingUser.info.username }}
-        localStorage.setItem("housie", JSON.stringify(newHousie));
-        toast(incomingUser.info.username + " completed Jaldi 5");
+    socket.on("micAllow",(incomingHousie) => {
+      setHousie((prevHousie) => {
+        if (
+          incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
+        ) {
+          const updatedHousie = {
+            ...prevHousie,
+            ...incomingHousie,
+          };
+          localStorage.setItem("housie", JSON.stringify(updatedHousie));
+
+          return updatedHousie; // Return the new updated state
+        }
+
+        return prevHousie; // Return the previous state if room numbers don't match
+      });
+    })
+
+    socket.on(
+      "ticketUpdate",
+      (newTicketCount, selectedUser, incomingHousie, incomingTickets) => {
+        setHousie((prevHousie) => {
+          if (
+            incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
+          ) {
+            const updatedHousie = {
+              ...prevHousie,
+              ...incomingHousie,
+            };
+            localStorage.setItem("housie", JSON.stringify(updatedHousie));
+
+            return updatedHousie; // Return the new updated state
+          }
+
+          return prevHousie; // Return the previous state if room numbers don't match
+        });
+
+        setCurrentUser((prevUser) => {
+          if (selectedUser === currentUserRef.current.info.username) {
+            const newUser = {
+              ...prevUser,
+              info: {
+                ...currentUser.info,
+                ticketCount: newTicketCount,
+              },
+              tickets: incomingTickets,
+            };
+            localStorage.setItem("currentUser", JSON.stringify(newUser));
+            return newUser;
+          }
+          return prevUser;
+        });
       }
+    );
+
+    socket.on(
+      "jaldi5Complete",
+      (incomingHousie: Housie, incomingUser: User) => {
+        console.log(incomingHousie.jaldi5Status)
+        setHousie((prevHousie) => {
+          if (
+            incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
+          ) {
+            const updatedHousie = {
+              ...prevHousie,
+              ...incomingHousie,
+            };
+            // console.log("Updated Housie:", updatedHousie);
+
+            toast.info(incomingUser.info.username + " has completed Jaldi5");
+            localStorage.setItem("housie", JSON.stringify(updatedHousie));
+
+            return updatedHousie; // Return the new updated state
+          }
+
+          return prevHousie; // Return the previous state if room numbers don't match
+        });
+      }
+    );
+
+    socket.on("row1Complete", (incomingHousie: Housie, incomingUser: User) => {
+      setHousie((prevHousie) => {
+        if (
+          incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
+        ) {
+          const updatedHousie = {
+            ...prevHousie,
+            ...incomingHousie,
+          };
+          // console.log("Updated Housie:", updatedHousie);
+
+          toast.info(incomingUser.info.username + " has completed Row1");
+          localStorage.setItem("housie", JSON.stringify(updatedHousie));
+
+          return updatedHousie; // Return the new updated state
+        }
+
+        return prevHousie; // Return the previous state if room numbers don't match
+      });
     });
 
-    socket.on("row1Complete", (incomingUser : User) => {
-      if (incomingUser.info.roomNumber === housie.roomNumber) {
-        const newHousie = {...housie,secondRowStatus:{ isCompleted: true, winnerName: incomingUser.info.username }}
-        localStorage.setItem("housie", JSON.stringify(newHousie));
-        toast(incomingUser.info.username + " completed Row 1");
-      }
+    socket.on("row2Complete", (incomingHousie: Housie, incomingUser: User) => {
+      setHousie((prevHousie) => {
+        if (
+          incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
+        ) {
+          const updatedHousie = {
+            ...prevHousie,
+            ...incomingHousie,
+          };
+          // console.log("Updated Housie:", updatedHousie);
+
+          toast.info(incomingUser.info.username + " has joined the game");
+          localStorage.setItem("housie", JSON.stringify(updatedHousie));
+
+          return updatedHousie; // Return the new updated state
+        }
+
+        return prevHousie; // Return the previous state if room numbers don't match
+      });
     });
 
-    socket.on("row2Complete", (incomingUser : User) => {
-      if (incomingUser.info.roomNumber === housie.roomNumber) {
-        const newHousie = {...housie,secondRowStatus:{ isCompleted: true, winnerName: incomingUser.info.username }}
-        localStorage.setItem("housie", JSON.stringify(newHousie));
-        toast(incomingUser.info.username + " completed Row 2");
-      }
+    socket.on("row3Complete", (incomingHousie: Housie, incomingUser: User) => {
+      setHousie((prevHousie) => {
+        if (
+          incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
+        ) {
+          const updatedHousie = {
+            ...prevHousie,
+            ...incomingHousie,
+          };
+          // console.log("Updated Housie:", updatedHousie);
+
+          toast.info(incomingUser.info.username + " has joined the game");
+          localStorage.setItem("housie", JSON.stringify(updatedHousie));
+
+          return updatedHousie; // Return the new updated state
+        }
+
+        return prevHousie; // Return the previous state if room numbers don't match
+      });
     });
 
-    socket.on("row3Complete", (incomingUser : User) => {
-      if (incomingUser.info.roomNumber === housie.roomNumber) {
-        const newHousie = {...housie,firstRowStatus:{ isCompleted: true, winnerName: incomingUser.info.username }}
-        localStorage.setItem("housie", JSON.stringify(newHousie));
-        toast(incomingUser.info.username + " completed Row 3");
-      }
-    });
-
-    socket.on("win", (incomingUser : User) => {
-      if (incomingUser.info.roomNumber === housie.roomNumber) {
+    socket.on("win", (incomingUser: User) => {
+      if (incomingUser.info.roomNumber === housieRef.current.roomNumber) {
         setExitMessage(incomingUser.info.username + " has won the game 🎊🎉✨");
       }
     });
 
-    socket.on("exit",(incomingHousie : Housie,incomingUser : User) => {
-      if (incomingHousie.roomNumber === currentUser.info.roomNumber){
-        if(incomingUser.info.isAdmin){
+    socket.on("exit", (incomingHousie: Housie, incomingUser: User) => {
+      console.log(incomingHousie);
+      if (incomingHousie.roomNumber === currentUser.info.roomNumber) {
+        if (incomingUser.info.isAdmin) {
           resetGame();
-        }
-        else{
-          handleHousie(incomingHousie);
+        } else {
+          setHousie((prevHousie) => {
+            if (
+              incomingHousie.roomNumber ===
+              currentUserRef.current.info.roomNumber
+            ) {
+              const updatedHousie = {
+                ...prevHousie,
+                ...incomingHousie,
+              };
+              // console.log("Updated Housie:", updatedHousie);
+
+              toast.info(incomingUser.info.username + " has left the game");
+              localStorage.setItem("housie", JSON.stringify(updatedHousie));
+
+              return updatedHousie; // Return the new updated state
+            }
+
+            return prevHousie; // Return the previous state if room numbers don't match
+          });
         }
       }
-    })
+    });
 
-    socket.on("audioStream", (audioData, incomingUser : User) => {
-      if (incomingUser.info.roomNumber === currentUser.info.roomNumber) {
+    socket.on("audioStream", (audioData, incomingUser: User) => {
+      if (
+        incomingUser.info.roomNumber === currentUserRef.current.info.roomNumber
+      ) {
         // console.log("talking: "+room+" "+roomNo)
         var newData = audioData.split(";");
         newData[0] = "data:audio/ogg;";
@@ -347,22 +594,27 @@ function App() {
       }
     });
 
-    socket.on(
-      "housie",
-      (incomingHousie : Housie,incomingUser : User) => {
-
-        if (!incomingUser.info.isAdmin && incomingHousie.roomNumber === currentUser.info.roomNumber) {
-          handleHousie(incomingHousie)
-        }
-
+    socket.on("housie", (incomingHousie: Housie, incomingUser: User) => {
+      if (
+        !incomingUser.info.isAdmin &&
+        incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
+      ) {
+        handleHousie(incomingHousie);
       }
-    );
-
+    });
     return () => {
       socket.off("housie");
+      socket.off("entered");
+      socket.off("jaldi5Complete");
+      socket.off("row1Complete");
+      socket.off("row2Complete");
+      socket.off("row3Complete");
+      socket.off("exit");
+      socket.off("win");
+      socket.off("audioStream");
       socket.disconnect();
     };
-  }, []);
+  }, [currentUser, housie]);
 
   const startRecording = () => {
     // console.log("strted recording")
@@ -417,15 +669,14 @@ function App() {
     const localUser = localStorage.getItem("currentUser");
     const localHousie = localStorage.getItem("housie");
 
-    if (localUser && localHousie ) {
+    if (localUser && localHousie) {
       handleCurrentUser(JSON.parse(localUser));
-      handleHousie(JSON.parse(localHousie))
+      handleHousie(JSON.parse(localHousie));
       setLogged(true);
       dialogRef?.current?.close();
     } else {
       dialogRef.current?.showModal();
     }
-
   }, []);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -434,6 +685,11 @@ function App() {
     const type = formData.get("type");
     const roomCode = formData.get("enterRoom");
     var username = formData.get("username");
+    if (username) {
+      username =
+        username.toString().charAt(0).toUpperCase() +
+        username.toString().substring(1);
+    }
     setIsLoading(true);
     axios
       .post(`${URL}/api/room`, {
@@ -445,35 +701,23 @@ function App() {
         if (response.data.success) {
           setLogged(true);
           if (username && roomCode && type) {
-            username =
-              username.toString().charAt(0).toUpperCase() +
-              username.toString().substring(1);
             const newStore = generateRandomNums();
             const updatedUser = {
               ...currentUser,
               info: {
                 ...currentUser.info,
-                username,
+                username: username.toString(),
                 roomNumber: roomCode.toString(),
                 isAdmin: type.toString() === "createRoom",
               },
             };
             const newHousie = {
               ...housie,
-              participants: [
-                ...housie.participants,
-                {
-                  username,
-                  roomNumber: roomCode.toString(),
-                  isAdmin: type.toString() === "createRoom",
-                  micAllowed: false,
-                  ticketCount: 1,
-                  isEditing : false
-                },
-              ],
+              roomNumber: roomCode.toString(),
+              participants: response.data.users,
               numberStore: newStore,
             };
-            socket.emit("entered", newHousie);
+            socket.emit("entered", newHousie, updatedUser);
             localStorage.setItem("currentUser", JSON.stringify(updatedUser));
             localStorage.setItem("housie", JSON.stringify(newHousie));
             handleCurrentUser(updatedUser);
@@ -507,7 +751,6 @@ function App() {
 
   return (
     <div className="grid grid-cols-12 grid-rows-12 w-screen h-screen bg-softColor gap-2 p-1 md:gap-3 md:p-3">
-      <DetailsModal editingUser={housie.participants.find(participant => participant.isEditing === true)} editUser={editUser}/>
       <dialog
         ref={dialogRef}
         className="shadow-softShadow bg-softColor p-5 rounded-xl w-[500px]"
@@ -579,6 +822,7 @@ function App() {
           )}
         </form>
       </dialog>
+      <WinModal msg={exitMessage} logout={logout} handleWinModal={handleWinModal} open={winModal} />
       {logged && (
         <>
           <Sidebar
@@ -599,13 +843,15 @@ function App() {
             emitRow3Complete={emitRow3Complete}
             housie={housie}
             currentUser={currentUser}
-            handleHousie={handleHousie}
+            handleCurrentUser={handleCurrentUser}
           />
           <Participants
             handleAllowTalk={handleAllowTalk}
             currentUser={currentUser}
             housie={housie}
-            editUser={editUser}
+            handleCurrentUser={handleCurrentUser}
+            handleHousie={handleHousie}
+            emitTicketUpdate={emitTicketUpdate}
           />
         </>
       )}
