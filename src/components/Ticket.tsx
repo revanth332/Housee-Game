@@ -30,7 +30,7 @@ export default function Ticket({
     console.log(num);
     if (
       num === housie.currentRandomValue ||
-      housie.generatedRandomNumbers?.includes(num) || true
+      housie.generatedRandomNumbers?.includes(num)
     ) {
       const newTiles = currentUser.tickets[id].numberTiles.map((item) =>
         item.number === num ? { ...item, isMarked: true } : item
