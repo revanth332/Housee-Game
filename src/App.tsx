@@ -136,6 +136,7 @@ function App() {
   };
 
   const emitJaldi5 = () => {
+    console.log("jaldi 5 emitted")
     const newHousie = {
       ...housie,
       jaldi5Status: {
@@ -239,6 +240,7 @@ function App() {
 
   const resetGame = () => {
     localStorage.clear();
+    setWinModal(false)
     setLogged(false);
     dialogRef.current?.showModal();
     if (formRef.current) {
@@ -397,6 +399,16 @@ function App() {
       });
     });
 
+    socket.on("cancel",(incomingRoomNumber) => {
+      if(incomingRoomNumber === currentUserRef.current.info.roomNumber){
+        if(currentUserRef.current.info.isAdmin){
+          clearInterval(counterInterval);
+          clearInterval(intervalId);
+        }
+        resetGame();
+      }
+    })
+
     socket.on("micAllow",(incomingHousie) => {
       setHousie((prevHousie) => {
         if (
@@ -455,7 +467,7 @@ function App() {
     socket.on(
       "jaldi5Complete",
       (incomingHousie: Housie, incomingUser: User) => {
-        console.log(incomingHousie.jaldi5Status)
+        console.log(incomingHousie.jaldi5Status,"jaldi5 recieved")
         setHousie((prevHousie) => {
           if (
             incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
@@ -509,7 +521,7 @@ function App() {
           };
           // console.log("Updated Housie:", updatedHousie);
 
-          toast.info(incomingUser.info.username + " has joined the game");
+          toast.info(incomingUser.info.username + " has completed Row 2");
           localStorage.setItem("housie", JSON.stringify(updatedHousie));
 
           return updatedHousie; // Return the new updated state
@@ -530,7 +542,7 @@ function App() {
           };
           // console.log("Updated Housie:", updatedHousie);
 
-          toast.info(incomingUser.info.username + " has joined the game");
+          toast.info(incomingUser.info.username + " has Completed Row 3");
           localStorage.setItem("housie", JSON.stringify(updatedHousie));
 
           return updatedHousie; // Return the new updated state
@@ -541,7 +553,7 @@ function App() {
     });
 
     socket.on("win", (incomingUser: User) => {
-      if (incomingUser.info.roomNumber === housieRef.current.roomNumber) {
+      if (incomingUser.info.roomNumber === currentUserRef.current.info.roomNumber) {
         setExitMessage(incomingUser.info.username + " has won the game 🎊🎉✨");
       }
     });
@@ -576,6 +588,7 @@ function App() {
     });
 
     socket.on("audioStream", (audioData, incomingUser: User) => {
+      console.log("audio recieved")
       if (
         incomingUser.info.roomNumber === currentUserRef.current.info.roomNumber
       ) {
@@ -596,7 +609,7 @@ function App() {
 
     socket.on("housie", (incomingHousie: Housie, incomingUser: User) => {
       if (
-        !incomingUser.info.isAdmin &&
+        incomingUser.info.isAdmin &&
         incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
       ) {
         handleHousie(incomingHousie);
@@ -625,28 +638,30 @@ function App() {
         mediaRecorderRef.current = mediaRecorder;
         var audioChunks: Blob[] = [];
 
-        mediaRecorder.addEventListener("dataavailable", function (event) {
+        mediaRecorderRef.current.addEventListener("dataavailable", function (event) {
           audioChunks.push(event.data);
         });
 
-        mediaRecorder.addEventListener("stop", function () {
+        mediaRecorderRef.current.addEventListener("stop", function () {
           var audioBlob = new Blob(audioChunks);
           audioChunks = [];
           var fileReader = new FileReader();
           fileReader.readAsDataURL(audioBlob);
           fileReader.onloadend = function () {
             var base64String = fileReader.result;
-            socket.emit("audioStream", base64String, currentUser);
+            socket.emit("audioStream", base64String, currentUserRef.current);
           };
-          mediaRecorder.start();
+          if(mediaRecorderRef.current &&
+            mediaRecorderRef.current.state !== "recording") mediaRecorderRef.current.start();
           setTimeout(function () {
-            mediaRecorder.stop();
+            if(mediaRecorderRef.current) mediaRecorderRef.current.stop();
           }, 1000);
         });
 
-        mediaRecorder.start();
+        if(mediaRecorderRef.current &&
+          mediaRecorderRef.current.state !== "recording") mediaRecorderRef.current.start();
         setTimeout(function () {
-          mediaRecorder.stop();
+          if(mediaRecorderRef.current) mediaRecorderRef.current.stop();
         }, 1000);
       })
       .catch((error) => {
@@ -656,8 +671,7 @@ function App() {
 
   const stopRecording = () => {
     if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
+      mediaRecorderRef.current
     ) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.ondataavailable = null;
