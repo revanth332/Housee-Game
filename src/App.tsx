@@ -137,56 +137,67 @@ function App() {
 
   const emitJaldi5 = () => {
     console.log("jaldi 5 emitted")
-    const newHousie = {
-      ...housie,
-      jaldi5Status: {
-        isCompleted: true,
-        winnerName: currentUser.info.username,
-      },
-    };
-    if (!housie.jaldi5Status.isCompleted) {
-      toast("Juldi5 Completed");
-      localStorage.setItem("housie", JSON.stringify(newHousie));
-      socket.emit("jaldi5Complete", newHousie, currentUser);
-      handleHousie(newHousie);
-    }
+    setHousie((prevHousie) => {
+      const newHousie = {
+        ...prevHousie,
+        jaldi5Status: {
+          isCompleted: true,
+          winnerName: currentUser.info.username,
+        },
+      };
+      if (!housie.jaldi5Status.isCompleted) {
+        toast("Juldi5 Completed");
+        localStorage.setItem("housie", JSON.stringify(newHousie));
+        socket.emit("jaldi5Complete", newHousie, currentUser);
+      }
+      return newHousie;
+    })
   };
 
   const emitRow1Complete = () => {
-    const newHousie = {
-      ...housie,
-      firstRowStatus: {
-        isCompleted: true,
-        winnerName: currentUser.info.username,
-      },
-    };
-    if (!housie.firstRowStatus.isCompleted) {
-      toast("First Row completed");
-      localStorage.setItem("housie", JSON.stringify(newHousie));
-      socket.emit("row1Complete", newHousie, currentUser);
-      handleHousie(newHousie);
-    }
+    console.log("row 1 emitted")
+    setHousie((prevHousie) => {
+      const newHousie = {
+        ...prevHousie,
+        firstRowStatus: {
+          isCompleted: true,
+          winnerName: currentUser.info.username,
+        },
+      };
+      if (!housie.firstRowStatus.isCompleted) {
+        toast("First Row completed");
+        localStorage.setItem("housie", JSON.stringify(newHousie));
+        socket.emit("row1Complete", newHousie, currentUser);
+      }
+      return newHousie;
+    })
+    
   };
 
   const emitRow2Complete = () => {
-    const newHousie = {
-      ...housie,
-      secondRowStatus: {
-        isCompleted: true,
-        winnerName: currentUser.info.username,
-      },
-    };
-    if (!housie.secondRowStatus.isCompleted) {
-      toast("Second Row completed");
-      localStorage.setItem("housie", JSON.stringify(newHousie));
-      socket.emit("row2Complete", newHousie, currentUser);
-      handleHousie(newHousie);
-    }
+    console.log("row2 emitted")
+    setHousie((prevHousie) => {
+      const newHousie = {
+        ...prevHousie,
+        secondRowStatus: {
+          isCompleted: true,
+          winnerName: currentUser.info.username,
+        },
+      };
+      if (!housie.secondRowStatus.isCompleted) {
+        toast("Second Row completed");
+        localStorage.setItem("housie", JSON.stringify(newHousie));
+        socket.emit("row2Complete", newHousie, currentUser);
+      }
+      return newHousie;
+    })
   };
 
   const emitRow3Complete = () => {
+    console.log("row 3 emitted")
+    setHousie((prevHousie) => {
     const newHousie = {
-      ...housie,
+      ...prevHousie,
       thirdRowStatus: {
         isCompleted: true,
         winnerName: currentUser.info.username,
@@ -196,8 +207,9 @@ function App() {
       toast("Third Row completed");
       localStorage.setItem("housie", JSON.stringify(newHousie));
       socket.emit("row3Complete", newHousie, currentUser);
-      handleHousie(newHousie);
     }
+    return newHousie;
+  })
   };
 
   const emitTicketUpdate = (
@@ -490,6 +502,7 @@ function App() {
     );
 
     socket.on("row1Complete", (incomingHousie: Housie, incomingUser: User) => {
+      console.log("row1 complete recieved")
       setHousie((prevHousie) => {
         if (
           incomingHousie.roomNumber === currentUserRef.current.info.roomNumber
@@ -555,6 +568,7 @@ function App() {
     socket.on("win", (incomingUser: User) => {
       if (incomingUser.info.roomNumber === currentUserRef.current.info.roomNumber) {
         setExitMessage(incomingUser.info.username + " has won the game 🎊🎉✨");
+        handleWinModal();
       }
     });
 
